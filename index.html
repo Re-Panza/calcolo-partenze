@@ -2,7 +2,14 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <link rel="apple-touch-icon" href="../icona.png">
+  <link rel="manifest" href="../manifest.json">
+  
   <title>L&K: Calcola Partenze</title>
   <style>
     :root {
@@ -24,8 +31,19 @@
                   radial-gradient(1000px 500px at 90% 10%, rgba(52,211,153,.18), transparent 55%),
                   var(--bg);
       color: var(--text);
-      padding: 24px;
+      /* Padding dinamico: 20px di base, ma aumenta se c'è il notch dell'iPhone */
+      padding: env(safe-area-inset-top, 20px) 24px 24px 24px;
       min-height: 100vh;
+      /* Impedisce selezioni fastidiose durante il gioco */
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    /* Riattiva la selezione solo dove scrivi o leggi i risultati */
+    textarea, input, .result-card, .time-display {
+      -webkit-user-select: text;
+      user-select: text;
     }
 
     /* Ottimizzazione padding per schermi piccoli */
@@ -199,9 +217,15 @@
         transition: 0.3s;
     }
     .paypal-link:hover { background: rgba(0, 112, 186, 0.3); transform: translateY(-2px); }
-  </style>
+ </style>
 </head>
 <body>
+
+  <div style="max-width: 980px; margin: 0 auto; padding: 10px 5px;">
+      <a href="../index.html" style="text-decoration:none; color:var(--accent); font-weight:bold; display:inline-flex; align-items:center; gap:8px;">
+          <span style="font-size:20px;">🏠</span> Torna alla Hub
+      </a>
+  </div>
 
 <div class="wrap">
   <header>
@@ -343,6 +367,14 @@
         link.click();
     }
 </script>
-
+<script>
+    // Registra il service worker anche qui per gestire l'offline
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('../sw.js');
+    }
+  </script>
 </body>
+</html>
+</body>
+
 </html>
