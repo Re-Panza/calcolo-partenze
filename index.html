@@ -367,12 +367,23 @@
         link.click();
     }
 </script>
-<script>
-    // Registra il service worker anche qui per gestire l'offline
+
+  <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
+      // Usiamo il link completo per "agganciare" la pagina all'app installata
+      navigator.serviceWorker.register('https://re-panza.github.io/https://re-panza.github.io/lk_tool/sw.js');
     }
   </script>
+
+  <footer class="paypal-footer" style="text-align:center; padding: 20px 0;">
+      <p style="font-size:12px; color:#93a4c7; margin-bottom:12px; font-family: sans-serif;">
+          Ti piace questo strumento?
+      </p>
+      <a href="https://paypal.me/Longo11" target="_blank" style="color:var(--accent); text-decoration:none; font-weight:bold;">
+          ☕ Offrimi un caffè su PayPal
+      </a>
+  </footer>
+
 </body>
 </html>
 
