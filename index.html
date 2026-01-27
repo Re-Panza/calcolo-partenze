@@ -2,14 +2,15 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  
- <meta name="apple-mobile-web-app-capable" content="yes">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   
+  <script src="https://re-panza.github.io/lk_tool/version.js"></script>
+  <script>
+    document.write(`<link rel="manifest" href="https://re-panza.github.io/lk_tool/manifest.json?v=${APP_VERSION}">`);
+  </script>
   <link rel="apple-touch-icon" href="https://re-panza.github.io/lk_tool/icona.png">
-  <link rel="manifest" href="https://re-panza.github.io/lk_tool/manifest.json?v=3.9">
-  
   <title>L&K: Calcola Partenze Truppe</title>
   <style>
     :root {
@@ -362,10 +363,11 @@
 </script>
 
 <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('https://re-panza.github.io/lk_tool/sw.js?v=3.9');
-    }
-  </script>
+  if ('serviceWorker' in navigator) {
+    // Usa la versione caricata automaticamente da version.js
+    navigator.serviceWorker.register('https://re-panza.github.io/lk_tool/sw.js?v=' + APP_VERSION);
+  }
+</script>
 
   <footer class="paypal-footer">
       <p style="font-size:12px; color:#93a4c7; margin-bottom:12px; font-family: sans-serif;">
@@ -377,6 +379,7 @@
   </footer>
 </body>
 </html>
+
 
 
 
