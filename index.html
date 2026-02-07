@@ -1,738 +1,422 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://re-panza.github.io/lk_tool/icona.png">
-
-    <title>Ricerca Giocatore - L&K Tool</title>
-
-    <script src="https://re-panza.github.io/lk_tool/version.js"></script>
-    <script>
-        const APP_VERSION = typeof APP_VERSION !== 'undefined' ? APP_VERSION : '1.0';
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <script src="https://re-panza.github.io/lk_tool/version.js"></script>
+  <script>
+    if (typeof APP_VERSION !== 'undefined') {
         document.write(`<link rel="manifest" href="https://re-panza.github.io/lk_tool/manifest.json?v=${APP_VERSION}">`);
-    </script>
+    }
+  </script>
+  <link rel="apple-touch-icon" href="https://re-panza.github.io/lk_tool/icona.png">
+  <title>L&K: Calcola Partenze</title>
+  
+  <style>
+    :root {
+      --bg: #0f172a; --card: #111c33; --muted: #93a4c7; --text: #e8eefc; --accent: #60a5fa;
+      --border: rgba(255, 255, 255, .10); --success: #34d399; --gold: #fbbf24;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% 0%, rgba(96,165,250,.25), transparent 60%),
+                  radial-gradient(1000px 500px at 90% 10%, rgba(52,211,153,.18), transparent 55%), var(--bg);
+      color: var(--text); padding: env(safe-area-inset-top, 20px) 20px 80px 20px;
+      min-height: 100vh; -webkit-user-select: none; user-select: none;
+    }
+    input, textarea, .selectable { -webkit-user-select: text; user-select: text; }
+    .wrap { max-width: 800px; margin: 0 auto; }
+    .top-nav { max-width: 800px; margin: 0 auto 15px auto; }
+    .home-link { text-decoration: none; color: var(--accent); font-weight: bold; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    h1 { font-size: 24px; margin: 0; color: #fff; font-weight: 800; }
+    .card { background: rgba(17, 28, 51, .85); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.25); margin-bottom: 20px; backdrop-filter: blur(10px); }
+    .card h2 { margin-top:0; font-size: 16px; color: var(--accent); display:flex; align-items:center; gap:8px;}
+    label { display: block; color: var(--muted); font-size: 12px; text-transform: uppercase; margin-bottom: 5px; font-weight: bold; }
+    input, select, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255, 255, 255, .05); color: var(--text); outline: none; font-size: 15px; font-family: inherit; transition: 0.2s; }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); background: rgba(255,255,255,0.1); }
+    .row { display: flex; gap: 15px; margin-bottom: 15px; }
+    .col { flex: 1; }
+    .chk-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+    .chk-label { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text); cursor: pointer; text-transform: none; }
+    .chk-label input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
+    button { width: 100%; padding: 14px; border-radius: 12px; font-weight: 800; border: 1px solid var(--accent); background: rgba(96, 165, 250, .15); color: var(--accent); cursor: pointer; text-transform: uppercase; font-size: 14px; transition: 0.2s; }
+    button:active { transform: scale(0.98); background: var(--accent); color: #000; }
+    .btn-green { border-color: var(--success); background: rgba(52, 211, 153, 0.15); color: var(--success); }
+    .btn-green:active { background: var(--success); color: #000; }
+    .res-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 14px; padding: 15px; margin-bottom: 12px; position: relative; overflow: hidden; }
+    .res-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--gold); }
+    .res-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .res-target { font-weight: 800; font-size: 16px; color: #fff; }
+    .res-coords { font-family: monospace; color: var(--muted); font-size: 13px; }
+    .res-route { display: flex; align-items: center; gap: 10px; font-size: 13px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; margin-bottom: 10px; }
+    .route-arrow { color: var(--muted); font-size: 16px; }
+    .route-info b { color: var(--gold); }
+    .res-time-box { text-align: center; background: rgba(251, 191, 36, 0.1); border: 1px dashed var(--gold); border-radius: 10px; padding: 10px; }
+    .launch-label { font-size: 11px; color: var(--gold); text-transform: uppercase; font-weight: bold; }
+    .launch-time { font-size: 20px; font-weight: 800; color: #fff; margin: 4px 0; }
+    .launch-date { font-size: 12px; color: var(--muted); }
+    .copy-btn { margin-top: 8px; padding: 8px; font-size: 12px; border-radius: 8px; background: transparent; border: 1px solid var(--border); color: var(--muted); }
+    #errorBanner { display: none; padding: 12px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); color: #ffcccc; border-radius: 12px; margin-bottom: 20px; font-weight: bold; text-align: center; }
+    .loader { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--accent); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .tag-active { color: var(--success); font-weight: bold; font-size: 12px; margin-top: 5px; }
 
-    <style>
-        :root {
-            --bg: #0f172a;
-            --card: #111c33;
-            --muted: #93a4c7;
-            --text: #e8eefc;
-            --accent: #60a5fa;
-            --border: rgba(255, 255, 255, .10);
-            --success: #34d399;
-            --danger: #ef4444;
-            --dangerBg: rgba(239, 68, 68, .12);
-        }
+    /* --- STILE FOOTER & PAYPAL UNIFORMATO --- */
+    .paypal-footer {
+        text-align: center;
+        margin-top: 60px;
+        padding: 30px 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .paypal-link {
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        color: #fff !important;
+        background: #0070ba;
+        padding: 12px 28px;
+        border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(0, 112, 186, 0.3);
+        border: none;
+    }
+    .paypal-link:hover {
+        background: #005ea6;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 112, 186, 0.5);
+    }
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            margin: 0;
-            font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-            background: radial-gradient(1200px 600px at 20% 0%, rgba(96, 165, 250, .25), transparent 60%),
-                radial-gradient(1000px 500px at 90% 10%, rgba(52, 211, 153, .18), transparent 55%),
-                var(--bg);
-            color: var(--text);
-            padding: env(safe-area-inset-top, 20px) 20px 40px 20px;
-            -webkit-user-select: none;
-            user-select: none;
-            touch-action: manipulation;
-            line-height: 1.5;
-        }
-
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: rgba(17, 28, 51, .80);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 32px 24px;
-            border-radius: 24px;
-            border: 1px solid var(--border);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, .3);
-        }
-
-        .nav-header {
-            max-width: 500px;
-            margin: 0 auto 20px auto;
-            display: flex;
-            justify-content: flex-start;
-        }
-
-        .btn-home {
-            text-decoration: none;
-            color: var(--accent);
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 16px;
-        }
-
-        .page-title {
-            max-width: 500px;
-            margin: 0 auto 24px auto;
-            text-align: left; /* Allineamento a sinistra */
-        }
-
-        .page-title h2 {
-            font-size: 24px;
-            font-weight: 800;
-            color: #fff;
-            margin: 0 0 10px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .search-options {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            font-size: 15px;
-            color: var(--muted);
-            padding-left: 4px;
-        }
-
-        .search-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .search-option span {
-            color: var(--text);
-            font-weight: 500;
-        }
-
-        /* ISTRUZIONI STILE */
-        .instructions {
-            text-align: center;
-            font-size: 14px;
-            color: #e8eefc;
-            margin-bottom: 16px;
-            line-height: 1.5;
-            opacity: 0.9;
-        }
-
-        textarea {
-            width: 100%;
-            height: 140px;
-            padding: 16px;
-            margin-bottom: 20px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            background: rgba(255, 255, 255, .05);
-            color: var(--text);
-            outline: none;
-            font-size: 16px;
-            font-family: inherit;
-            resize: none;
-            -webkit-user-select: text;
-            user-select: text;
-            transition: border-color 0.2s;
-        }
-
-        textarea:focus {
-            border-color: var(--accent);
-        }
-
-        #errorBanner {
-            display: none;
-            margin-bottom: 20px;
-            border: 1px solid rgba(239, 68, 68, .4);
-            background: var(--dangerBg);
-            color: #ffcfcf;
-            border-radius: 16px;
-            padding: 14px;
-            font-size: 14px;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .btn-cerca {
-            width: 100%;
-            padding: 16px;
-            background: var(--accent);
-            border: none;
-            font-weight: 800;
-            font-size: 17px;
-            border-radius: 16px;
-            cursor: pointer;
-            color: #0f172a;
-            margin-bottom: 12px;
-            transition: transform 0.1s, opacity 0.2s;
-        }
-
-        .btn-cerca:active {
-            transform: scale(0.98);
-            opacity: 0.9;
-        }
-
-        .btn-export-box {
-            display: flex;
-            gap: 12px;
-            margin-top: 10px;
-            display: none;
-        }
-
-        .btn-exp {
-            flex: 1;
-            padding: 14px;
-            border-radius: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 14px;
-            border: 1px solid var(--border);
-        }
-
-        .btn-sel {
-            background: rgba(52, 211, 153, 0.1);
-            color: var(--success);
-            border-color: rgba(52, 211, 153, 0.3);
-        }
-
-        .btn-all {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--muted);
-        }
-
-        /* Stile Risultati */
-        #risultati {
-            margin-top: 24px;
-        }
-
-        .player-group {
-            margin-bottom: 16px;
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            overflow: hidden;
-            background: rgba(255, 255, 255, .02);
-        }
-
-        .player-header {
-            padding: 18px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 700;
-            font-size: 16px;
-            color: var(--accent);
-        }
-
-        .player-content {
-            display: none;
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid var(--border);
-        }
-
-        .player-header.active+.player-content {
-            display: block;
-        }
-
-        .castello-card {
-            background: rgba(255, 255, 255, .03);
-            padding: 14px;
-            margin-bottom: 10px;
-            border-radius: 14px;
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .hab-check {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: var(--accent);
-        }
-
-        .castello-nome {
-            font-weight: 700;
-            color: #fff;
-            display: block;
-            font-size: 16px;
-        }
-
-        .castello-info {
-            font-size: 13px;
-            color: var(--muted);
-            margin-top: 3px;
-        }
-
-        .castello-link {
-            color: var(--accent);
-            text-decoration: none;
-            font-family: monospace;
-            font-size: 12px;
-            display: block;
-            margin-top: 8px;
-            opacity: 0.6;
-            cursor: pointer;
-        }
-
-        /* --- STILE FOOTER & PAYPAL UNIFORMATO --- */
-        .paypal-footer {
-            text-align: center;
-            margin-top: 60px;
-            padding: 30px 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .paypal-link {
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.3s ease;
-            color: #fff !important;
-            background: #0070ba;
-            padding: 12px 28px;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(0, 112, 186, 0.3);
-            border: none;
-        }
-
-        .paypal-link:hover {
-            background: #005ea6;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 112, 186, 0.5);
-        }
-
-        /* --- STILE ASSISTENTE COPIATO --- */
-        #ai-assistant-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 9999;
-        }
-
-        #ai-button {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-            overflow: hidden;
-            border: 2px solid var(--accent);
-        }
-
-        #ai-button img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        #ai-window {
-            display: none;
-            position: absolute;
-            bottom: 85px;
-            right: 0;
-            width: 85vw;
-            max-width: 320px;
-            background: var(--card);
-            border: 1px solid var(--accent);
-            border-radius: 20px;
-            padding: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(10px);
-        }
-
-        .ai-header {
-            color: var(--accent);
-            font-weight: bold;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 5px;
-        }
-
-        #ai-content {
-            max-height: 250px;
-            overflow-y: auto;
-            margin-bottom: 10px;
-            font-size: 13px;
-            color: var(--text);
-        }
-
-        .ai-input-area {
-            display: flex;
-            gap: 5px;
-            border-top: 1px solid var(--border);
-            padding-top: 10px;
-        }
-
-        #ai-input {
-            flex: 1;
-            background: #000;
-            border: 1px solid var(--border);
-            color: #fff;
-            border-radius: 5px;
-            padding: 8px;
-            font-size: 12px;
-        }
-
-        #ai-send-btn {
-            background: var(--accent);
-            border: none;
-            border-radius: 5px;
-            padding: 5px 15px;
-            cursor: pointer;
-            font-weight: bold;
-            color: #000;
-        }
-    </style>
+    #ai-assistant-container { position:fixed; bottom:20px; right:20px; z-index:9999; }
+    #ai-button { width:70px; height:70px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.4); border:2px solid var(--accent); overflow:hidden; }
+    #ai-button img { width:100%; height:100%; object-fit:cover; }
+    #ai-window { display:none; position:absolute; bottom:85px; right:0; width:85vw; max-width:320px; background:var(--card); border:1px solid var(--accent); border-radius:20px; padding:15px; box-shadow:0 10px 30px rgba(0,0,0,0.6); }
+    .ai-header { color:var(--accent); font-weight:bold; margin-bottom:10px; display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:5px; }
+    #ai-content { max-height:250px; overflow-y:auto; margin-bottom:10px; font-size:13px; color:var(--text); }
+    .ai-input-area { display:flex; gap:5px; border-top:1px solid var(--border); padding-top:10px; }
+    #ai-input { flex:1; background:#000; border:1px solid var(--border); color:#fff; border-radius:5px; padding:8px; font-size:12px; }
+    #ai-send-btn { background:var(--accent); border:none; border-radius:5px; padding:5px 15px; cursor:pointer; font-weight:bold; color:#000; }
+  </style>
 </head>
-
 <body>
 
-    <div class="nav-header">
-        <a href="https://re-panza.github.io/lk_tool/index.html" class="btn-home">🏠 Torna alla Home</a>
-    </div>
+  <div class="top-nav">
+    <a href="https://re-panza.github.io/lk_tool/" class="home-link">
+      <span style="font-size:20px;">🏠</span> Torna alla Home
+    </a>
+  </div>
 
-    <div class="page-title">
-        <h2>🔍 Ricerca Target</h2>
-        <div class="search-options">
-            <div class="search-option">👤 <span>Giocatori</span></div>
-            <div class="search-option">🛡️ <span>Alleanze</span></div>
-            <div class="search-option">💤 <span>Inattivi</span></div>
+  <div class="wrap">
+    <header>
+      <h1>⚔️ Calcola Partenze (Max Distanza)</h1>
+    </header>
+
+    <div id="errorBanner"></div>
+
+    <div class="card">
+        <h2>👤 Profilo Attaccante</h2>
+        <div class="row">
+            <div class="col">
+                <label>Incolla Link Profilo Attaccante</label>
+                <input type="text" id="attackerLink" placeholder="l+k://player?123&337" onchange="fetchAttackerData()">
+                <div id="attackerStatus" class="tag-active" style="display:none"></div>
+            </div>
         </div>
-    </div>
-
-    <div class="container">
         
-        <div id="errorBanner">⚠️ Incolla 'Nome giocatore:' e il link 'l+k://player'</div>
-
-        <p class="instructions">
-            Incolla il link giocatore o alleanza: ti darò tutti i suoi possedimenti e ti dirò se è attivo o inattivo.<br>
-            Se incolli il link alleanza lo farò per tutti i tuoi nemici.
-        </p>
-
-        <textarea id="inputText"
-            placeholder="Incolla qui il profilo o link...&#10;Esempio: l+k://alliance?11&337"></textarea>
-
-        <button class="btn-cerca" onclick="cerca()">AVVIA RICERCA</button>
-
-        <div id="export-buttons" class="btn-export-box">
-            <button class="btn-exp btn-sel" onclick="exportReport(true)">📥 SELEZIONATI</button>
-            <button class="btn-exp btn-all" onclick="exportReport(false)">📥 TUTTI</button>
-        </div>
-
-        <div id="risultati"></div>
-    </div>
-
-    <footer class="paypal-footer">
-        <p style="font-size:12px; color:#93a4c7; margin-bottom:8px; font-family: sans-serif;">
-            Ti piace questo strumento?
-        </p>
-        <a href="https://paypal.me/Longo11" target="_blank" class="paypal-link">
-            ☕ Offrimi un caffè su PayPal
-        </a>
-    </footer>
-
-    <div id="ai-assistant-container">
-        <div id="ai-window">
-            <div class="ai-header">
-                <span>👑 Assistente Re Panza</span>
-                <span onclick="toggleAI()" style="cursor:pointer">×</span>
+        <div class="row">
+            <div class="col">
+                <label>Livello Strutture (Città/Metro)</label>
+                <select id="structureLevel"></select>
             </div>
-            <div id="ai-content">
-                <p>Ciao! Sono Re Panza. Chiedimi pure consiglio per la tua conquista.</p>
-            </div>
-            <div class="ai-input-area">
-                <input type="text" id="ai-input" placeholder="Scrivi al Re...">
-                <button id="ai-send-btn" onclick="chiediAlRe()">Invia</button>
+            <div class="col">
+                <label>Evento Velocità</label>
+                <select id="speedEvent">
+                    <option value="0">Nessuno (Normale)</option>
+                    <option value="100">⚡ Velocità 100%</option>
+                </select>
             </div>
         </div>
-        <div id="ai-button" onclick="toggleAI()">
-            <img src="https://re-panza.github.io/lk_tool/re-panza-ai.png" alt="Re Panza AI">
+
+        <div class="chk-group">
+            <label class="chk-label"><input type="checkbox" id="chkMap"> 🗺️ Mappa Area (Bonus Castelli)</label>
+            <label class="chk-label"><input type="checkbox" id="chkCompass"> 🧭 Bussola (Bonus Fortezze)</label>
+            <label class="chk-label"><input type="checkbox" id="chkManeuver"> 🐎 Manovra di Fianco (Bonus Metro)</label>
         </div>
     </div>
 
-    <script src="https://re-panza.github.io/lk_tool/common.js"></script>
-    <script src="https://re-panza.github.io/re-panza-core/re_panza_brain.js"></script>
+    <div class="card">
+        <h2>🎯 Configurazione Attacco</h2>
+        <div class="row">
+            <div class="col">
+                <label>📅 Data Impatto</label>
+                <input type="date" id="impactDate">
+            </div>
+            <div class="col">
+                <label>🕒 Ora Impatto</label>
+                <input type="time" id="impactTime" step="1">
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col">
+                <label>Truppa da Inviare</label>
+                <select id="troopType"></select>
+            </div>
+        </div>
 
-    <script>
-        let dbCastelli = [];
-        let dbNomiMap = {}; // Mappa ID -> Nome
-        let mondoCaricatoAttualmente = "";
+        <label>🔗 Link Bersagli (Uno per riga)</label>
+        <textarea id="targetList" placeholder="Incolla qui i link dei castelli da attaccare..."></textarea>
+        
+        <button class="btn-green" onclick="calculateDepartures()" style="margin-top:15px;">🚀 CALCOLA PARTENZE (LONTANO)</button>
+    </div>
 
-        function getTipoHabitat(t) {
-            const tipo = String(t).trim();
-            if (tipo === "0") return "Castello";
-            if (tipo === "2") return "Fortezza";
-            if (tipo === "4") return "Città";
-            return isNaN(tipo) ? tipo : "Metropoli";
+    <div id="resultsArea"></div>
+
+  </div>
+
+  <footer class="paypal-footer">
+    <p style="font-size:12px; color:#93a4c7; margin-bottom:8px; font-family: sans-serif;">
+        Ti piace questo strumento?
+    </p>
+    <p style="font-size:11px; color:#5c709b; margin-bottom:20px;">
+        Sviluppato da Re Panza • Imperial Wolves (Ita VI) • Jamaican Peace (Ita 15)
+    </p>
+    <a href="https://paypal.me/Longo11" target="_blank" class="paypal-link">
+        ☕ Offrimi un caffè su PayPal
+    </a>
+  </footer>
+
+  <div id="ai-assistant-container">
+    <div id="ai-window">
+        <div class="ai-header">
+            <span>👑 Assistente Re Panza</span>
+            <span onclick="toggleAI()" style="cursor:pointer">×</span>
+        </div>
+        <div id="ai-content">
+            <p>Ciao! Carica il tuo profilo, scegli i bersagli e ti dirò io da dove partire per arrivare puntuale come un'arrosto.</p>
+        </div>
+        <div class="ai-input-area">
+            <input type="text" id="ai-input" placeholder="Scrivi al Re...">
+            <button id="ai-send-btn" onclick="chiediAlRe()">Invia</button>
+        </div>
+    </div>
+    <div id="ai-button" onclick="toggleAI()">
+        <img src="https://re-panza.github.io/lk_tool/re-panza-ai.png" alt="Re Panza AI">
+    </div>
+  </div>
+
+  <script src="https://re-panza.github.io/lk_tool/common.js"></script>
+  <script src="https://re-panza.github.io/re-panza-core/re_panza_brain.js"></script>
+
+  <script>
+    let GAME_DATA = null;
+    let ATTACKER_CASTLES = [];
+    let WORLD_DB = [];
+    let CURRENT_WORLD = null;
+
+    window.onload = async () => {
+        let lvlHtml = "";
+        for(let i=30; i>=1; i--) lvlHtml += `<option value="${i}">Livello ${i}</option>`;
+        document.getElementById('structureLevel').innerHTML = lvlHtml;
+        await loadGameConfig();
+    };
+
+    async function loadGameConfig() {
+        try {
+            const r = await fetch('https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_truppe.json?v=' + Date.now());
+            if(!r.ok) throw new Error("Errore config");
+            const json = await r.json();
+            GAME_DATA = json.game_config;
+            let tHtml = "";
+            for (const [key, val] of Object.entries(GAME_DATA.troops_base_seconds)) {
+                tHtml += `<option value="${key}">${key}</option>`;
+            }
+            document.getElementById('troopType').innerHTML = tHtml;
+        } catch(e) {
+            showError("Errore caricamento dati truppe. Riprova.");
         }
+    }
 
-        async function cerca() {
-            const input = document.getElementById('inputText').value;
-            const resDiv = document.getElementById('risultati');
-            const exportDiv = document.getElementById('export-buttons');
-            const errorBanner = document.getElementById('errorBanner');
+    async function fetchAttackerData() {
+        const link = document.getElementById('attackerLink').value;
+        const m = link.match(/player\?(\d+)&(\d+)/);
+        if(!m) { showError("Link giocatore non valido!"); return; }
+        const playerId = parseInt(m[1]);
+        const worldId = m[2];
+        const statusDiv = document.getElementById('attackerStatus');
 
-            resDiv.innerHTML = "";
-            errorBanner.style.display = "none";
-            exportDiv.style.display = "none";
-
-            // 1. Parsing Input
-            const playerPattern = /(?:Nome\s*giocatore|Giocatore)\s*:\s*([^\n\r]+)\s+(?:l\+k:\/\/|https?:\/\/.*?)player\?(\d+)&(\d+)/gi;
-            const namedMatches = [...input.matchAll(playerPattern)];
-            
-            // Regex universale per player link
-            const simplePlayerPattern = /(?:l\+k:\/\/|https?:\/\/.*?)player\?(\d+)&(\d+)/gi;
-            const simplePlayerMatches = [...input.matchAll(simplePlayerPattern)];
-
-            // Regex Alleanze
-            const alliancePattern = /(?:l\+k:\/\/|https?:\/\/.*?)alliance\?(\d+)&(\d+)/gi;
-            const allianceMatches = [...input.matchAll(alliancePattern)];
-
-            if (simplePlayerMatches.length === 0 && allianceMatches.length === 0) {
-                errorBanner.innerHTML = "⚠️ Incolla un link giocatore o alleanza valido.";
-                errorBanner.style.display = "block";
-                return;
-            }
-
-            // Mappatura ID -> Nome (da input utente)
-            const mapIdToNameInput = {};
-            const targetPlayerIds = new Set();
-            let mondoScelto = null;
-
-            // Priorità ai match con nome esplicito
-            namedMatches.forEach(m => {
-                const nome = m[1].trim();
-                const id = parseInt(m[2]);
-                const mondo = m[3];
-                mapIdToNameInput[id] = nome;
-            });
-
-            // Aggiungi tutti i player ID trovati
-            simplePlayerMatches.forEach(m => {
-                const id = parseInt(m[1]);
-                const mondo = m[2];
-                targetPlayerIds.add(id);
-                if (!mondoScelto) mondoScelto = mondo;
-            });
-
-            const targetAllianceIds = new Set();
-            allianceMatches.forEach(m => {
-                const id = parseInt(m[1]);
-                const mondo = m[2];
-                targetAllianceIds.add(id);
-                if (!mondoScelto) mondoScelto = mondo; // Se non c'era player, usa mondo ally
-            });
-
-            // 2. Configurazione Database (URL CORRETTI CON RAW)
-            let urlDBCastelli;
-            let urlDBNomi = null;
-            
-            // Forziamo la conversione in stringa per evitare errori di tipo
-            const mondoStr = String(mondoScelto).trim();
-
-            if (mondoStr === "327") {
-                // *** CONFIGURAZIONE SPECIFICA PER MONDO 327 ***
-                // Castelli -> lk_scanner
-                urlDBCastelli = "https://raw.githubusercontent.com/Re-Panza/lk_scanner/main/database_mondo_327.json";
-                // Nomi -> scanner_classifica327
-                urlDBNomi = "https://raw.githubusercontent.com/Re-Panza/scanner_classifica327/main/database_classificamondo327.json";
-            } else {
-                // *** CONFIGURAZIONE STANDARD (lk_database) PER ALTRI MONDI (es. 237, 337) ***
-                urlDBCastelli = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_mondo_${mondoStr}.json`;
-                urlDBNomi = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_classificamondo${mondoStr}.json`;
-            }
-
-            // 3. Caricamento Dati (Parallelo)
-            if (mondoCaricatoAttualmente !== mondoStr) {
-                try {
-                    const promises = [fetch(urlDBCastelli + "?v=" + Date.now()).then(r => {
-                        if (!r.ok) throw new Error("File castelli non trovato: " + r.status);
-                        return r.json();
-                    })];
-                    
-                    if (urlDBNomi) {
-                        promises.push(
-                            fetch(urlDBNomi + "?v=" + Date.now())
-                            .then(r => r.ok ? r.json() : []) 
-                            .catch(() => [])
-                        );
-                    } else {
-                        promises.push(Promise.resolve([]));
-                    }
-
-                    const [datiCastelli, datiNomi] = await Promise.all(promises);
-                    
-                    dbCastelli = datiCastelli;
-                    
-                    // Costruiamo la mappa ID -> Nome
-                    dbNomiMap = {};
-                    if (Array.isArray(datiNomi)) {
-                        datiNomi.forEach(p => {
-                            const n = p.nick || p.name || p.n;
-                            const pid = p.id || p.p;
-                            if (pid && n) {
-                                dbNomiMap[parseInt(pid)] = n;
-                            }
-                        });
-                    }
-
-                    mondoCaricatoAttualmente = mondoStr;
-                } catch (err) {
-                    console.error(err);
-                    alert(`Impossibile caricare i database per il Mondo ${mondoStr}.\nErrore: ${err.message}\nLink tentato: ${urlDBCastelli}`);
-                    return;
-                }
-            }
-
-            // 4. Filtraggio Castelli
-            let castelliTrovati = dbCastelli.filter(c => {
-                if (targetPlayerIds.has(c.p)) return true;
-                if (targetAllianceIds.has(c.a)) return true;
-                return false;
-            });
-
-            if (castelliTrovati.length === 0) {
-                resDiv.innerHTML = `<p style="text-align:center; color:#93a4c7; margin-top:20px;">Nessun castello trovato nel Mondo ${mondoStr}.</p>`;
-                return;
-            }
-
-            // Raggruppamento per Giocatore
-            const gruppiPerGiocatore = {};
-            castelliTrovati.forEach(c => {
-                if (!gruppiPerGiocatore[c.p]) {
-                    gruppiPerGiocatore[c.p] = [];
-                }
-                gruppiPerGiocatore[c.p].push(c);
-            });
-
-            // 5. ORDINAMENTO E RENDER
-            // Creiamo un array di oggetti per poterli ordinare
-            const listaGiocatori = Object.keys(gruppiPerGiocatore).map(pid => {
-                const idNumerico = parseInt(pid);
-                const castelli = gruppiPerGiocatore[pid];
-                
-                // Ordina castelli per punti decrescenti
-                castelli.sort((a, b) => (b.pt || 0) - (a.pt || 0));
-                
-                // Calcola il punteggio totale del giocatore (somma dei castelli visibili)
-                const totalePunti = castelli.reduce((acc, c) => acc + (c.pt || 0), 0);
-                
-                // Risoluzione Nome
-                const nomeGiocatore = mapIdToNameInput[idNumerico] || dbNomiMap[idNumerico] || "ID: " + pid;
-
-                return {
-                    id: idNumerico,
-                    nome: nomeGiocatore,
-                    castelli: castelli,
-                    puntiTotali: totalePunti
-                };
-            });
-
-            // Ordina la lista giocatori dal più "grosso" al più piccolo
-            listaGiocatori.sort((a, b) => b.puntiTotali - a.puntiTotali);
-
-            // Renderizza a schermo
-            listaGiocatori.forEach(giocatore => {
-                const isInactive = giocatore.castelli[0].i === true;
-                let nomeDisplay = giocatore.nome;
-                
-                // Aggiungiamo i punti totali al nome per chiarezza
-                nomeDisplay += ` <span style="font-size:12px; color:#93a4c7">(${giocatore.puntiTotali.toLocaleString()} pt)</span>`;
-
-                if (isInactive) {
-                    nomeDisplay += ` <span style="color:#ef4444; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); padding:2px 8px; border-radius:12px; font-size:11px; margin-left:8px; font-weight:bold;">⚠️ INATTIVO</span>`;
+        if(CURRENT_WORLD !== worldId) {
+            statusDiv.innerHTML = `<span class="loader"></span> Carico Mondo ${worldId}...`;
+            statusDiv.style.display = 'block';
+            try {
+                let urlDB = "";
+                if(worldId === "327") {
+                    urlDB = "https://raw.githubusercontent.com/Re-Panza/lk_scanner/main/database_mondo_327.json";
                 } else {
-                    nomeDisplay += ` <span style="color:#34d399; background:rgba(52,211,153,0.15); border:1px solid rgba(52,211,153,0.3); padding:2px 8px; border-radius:12px; font-size:11px; margin-left:8px; font-weight:bold;">✅ ATTIVO</span>`;
+                    urlDB = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_mondo_${worldId}.json`;
                 }
-
-                renderPlayerGroup(nomeDisplay, giocatore.castelli, resDiv, mondoStr);
-            });
-
-            if (listaGiocatori.length > 0) {
-                exportDiv.style.display = "flex";
+                const r = await fetch(urlDB + "?v=" + Date.now());
+                if(!r.ok) throw new Error("Mondo non trovato");
+                const rawData = await r.json();
+                WORLD_DB = [];
+                const flat = (n) => { 
+                    if(Array.isArray(n)) n.forEach(flat); 
+                    else if(n && n.x) WORLD_DB.push(n); 
+                    else if(typeof n==='object') Object.values(n).forEach(flat); 
+                };
+                flat(rawData);
+                CURRENT_WORLD = worldId;
+            } catch(e) {
+                showError("Errore caricamento Database Mondo " + worldId);
+                statusDiv.style.display = 'none';
+                return;
             }
         }
-
-        function renderPlayerGroup(nome, castelli, container, mondo) {
-            const group = document.createElement('div');
-            group.className = 'player-group';
-
-            let itemsHtml = castelli.map((c, i) => {
-                const tipo = getTipoHabitat(c.t);
-                const link = `l+k://coordinates?${c.x},${c.y}&${mondo}`;
-                const punti = (c.pt || 0).toLocaleString();
-                const coordStr = `${c.x},${c.y}`;
-
-                return `
-                    <div class="castello-card">
-                        <input type="checkbox" class="hab-check" 
-                               data-nome="${c.n}" data-tipo="${tipo}" 
-                               data-punti="${punti}" data-link="${link}">
-                        <div style="flex-grow:1">
-                            <span class="castello-nome">
-                                ${i + 1}. ${c.n || 'Senza Nome'} 
-                            </span>
-                            <span class="castello-info"><b>${tipo}</b> • ${punti} pt</span>
-                            <a href="${link}" class="castello-link" onclick="event.preventDefault(); copyToClipboard('${coordStr}')">
-                                ${link} (Clicca per Copiare)
-                            </a>
-                        </div>
-                    </div>`;
-            }).join('');
-
-            group.innerHTML = `
-                <div class="player-header" onclick="this.classList.toggle('active'); const content = this.nextElementSibling; content.style.display = content.style.display === 'block' ? 'none' : 'block';">
-                    <span>👤 ${nome} (${castelli.length})</span>
-                    <span>▼</span>
-                </div>
-                <div class="player-content" style="display:none">${itemsHtml}</div>
-            `;
-            container.appendChild(group);
+        ATTACKER_CASTLES = WORLD_DB.filter(c => (c.p || c.pid || c.playerid) == playerId);
+        if(ATTACKER_CASTLES.length > 0) {
+            statusDiv.innerHTML = `✅ Profilo Caricato: Trovati ${ATTACKER_CASTLES.length} castelli nel Mondo ${worldId}`;
+            statusDiv.style.color = 'var(--success)';
+            document.getElementById('errorBanner').style.display = 'none';
+        } else {
+            showError("Nessun castello trovato per questo giocatore.");
         }
+    }
 
-        function exportReport(soloSelezionati) {
-            const checkboxes = document.querySelectorAll('.hab-check');
-            let testo = "--- REPORT INTELLIGENCE L&K ---\n\n";
-            let count = 0;
-            checkboxes.forEach(cb => {
-                if (!soloSelezionati || cb.checked) {
-                    testo += `${cb.dataset.tipo}: ${cb.dataset.nome} (${cb.dataset.punti} pt)\nLink: ${cb.dataset.link}\n\n`;
-                    count++;
+    function calculateDepartures() {
+        if(ATTACKER_CASTLES.length === 0) return showError("Carica prima il profilo attaccante!");
+        if(!GAME_DATA) return showError("Dati gioco non caricati.");
+        const impactD = document.getElementById('impactDate').value;
+        const impactT = document.getElementById('impactTime').value;
+        if(!impactD || !impactT) return showError("Inserisci Data e Ora Impatto!");
+        const impactDateObj = new Date(impactD + "T" + impactT);
+        if(isNaN(impactDateObj.getTime())) return showError("Data non valida");
+        const targetText = document.getElementById('targetList').value;
+        const targets = [];
+        const linkRegex = /coordinates\?(\d+),(\d+)&(\d+)/g;
+        let match;
+        while ((match = linkRegex.exec(targetText)) !== null) {
+            if(match[3] !== CURRENT_WORLD) { showError(`Attenzione: Alcuni bersagli non sono del Mondo ${CURRENT_WORLD}!`); continue; }
+            targets.push({ x: parseInt(match[1]), y: parseInt(match[2]) });
+        }
+        if(targets.length === 0) return showError("Nessun bersaglio valido trovato.");
+        const troopKey = document.getElementById('troopType').value;
+        const speedEvent = document.getElementById('speedEvent').value === "100";
+        const structLvl = parseInt(document.getElementById('structureLevel').value);
+        const hasMap = document.getElementById('chkMap').checked;
+        const hasCompass = document.getElementById('chkCompass').checked;
+        const hasManeuver = document.getElementById('chkManeuver').checked;
+        const resDiv = document.getElementById('resultsArea');
+        resDiv.innerHTML = "";
+
+        targets.forEach((target, idx) => {
+            let bestSource = null;
+            let maxTravelTime = 0; 
+            ATTACKER_CASTLES.forEach(source => {
+                const dist = getDist(source.x, source.y, target.x, target.y);
+                if(dist === 0) return; 
+                const habType = getHabitatType(source.t); 
+                const speed = calculateSpeed(troopKey, habType, structLvl, speedEvent, hasMap, hasCompass, hasManeuver);
+                const travelTimeSeconds = dist * speed;
+                if(travelTimeSeconds > maxTravelTime) {
+                    maxTravelTime = travelTimeSeconds;
+                    bestSource = { ...source, dist: dist, typeName: habType };
                 }
             });
-            if (count === 0) return alert("Nessuna selezione!");
-            const blob = new Blob([testo], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Report_Intelligence.txt`;
-            a.click();
-        }
+            if(bestSource) {
+                const depDate = new Date(impactDateObj.getTime() - (maxTravelTime * 1000));
+                renderResultCard(resDiv, idx+1, target, bestSource, depDate, troopKey);
+            } else {
+                resDiv.innerHTML += `<div class="res-card"><div style="color:red">Bersaglio #${idx+1}: Nessun castello trovato.</div></div>`;
+            }
+        });
+    }
 
-        // 2. Gestione Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js');
-            });
+    function getHabitatType(t) {
+        if(t == 0) return "castello";
+        if(t == 2) return "fortezza";
+        if(t == 4) return "citta"; 
+        if(t > 4) return "metropoli"; 
+        return "castello"; 
+    }
+
+    function calculateSpeed(troopKey, habType, lvl, isEvent100, hasMap, hasCompass, hasManeuver) {
+        let base = GAME_DATA.troops_base_seconds[troopKey];
+        let config = GAME_DATA.habitats[habType];
+        let factor = config.base_multiplier;
+        if(habType === "citta" || habType === "metropoli") {
+            if(config.building_levels && config.building_levels[lvl]) {
+                factor = factor * config.building_levels[lvl];
+            }
         }
-    </script>
+        if(habType === "castello" && hasMap) factor = factor * 0.95;
+        if(habType === "fortezza" && hasCompass) factor = factor * 0.95;
+        if(habType === "metropoli" && hasManeuver) factor = factor * 0.90;
+        if(isEvent100) factor = factor * 0.5;
+        return base * factor;
+    }
+
+    function getDist(x1, y1, x2, y2) {
+        let cy1 = y1; let cz1 = x1 - Math.floor(y1 / 2); let cx1 = -cy1 - cz1;
+        let cy2 = y2; let cz2 = x2 - Math.floor(y2 / 2); let cx2 = -cy2 - cz2;
+        return Math.max(Math.abs(cx1 - cx2), Math.abs(cy1 - cy2), Math.abs(cz1 - cz2));
+    }
+
+    function renderResultCard(container, idx, target, source, depDate, troop) {
+        const timeStr = depDate.toLocaleTimeString('it-IT');
+        const dateStr = depDate.toLocaleDateString('it-IT');
+        const targetLink = `l+k://coordinates?${target.x},${target.y}&${CURRENT_WORLD}`;
+        const sourceLink = `l+k://coordinates?${source.x},${source.y}&${CURRENT_WORLD}`;
+        const html = `
+        <div class="res-card">
+            <div class="res-header">
+                <div>
+                    <div class="res-target">BERSAGLIO #${idx}</div>
+                    <div class="res-coords">
+                        <a href="#" onclick="copyToClipboard('${target.x},${target.y}'); return false;" style="color:var(--accent)">
+                            (${target.x},${target.y})
+                        </a>
+                    </div>
+                </div>
+                <div class="badge" style="background:rgba(255,255,255,0.1); font-size:12px;">${source.dist} Campi</div>
+            </div>
+            <div class="res-route">
+                <div class="route-info" style="text-align:right; flex:1">
+                    <div style="font-size:11px; color:#aaa">PARTENZA DA</div>
+                    <div style="font-weight:bold; color:#fff">${source.typeName.toUpperCase()}</div>
+                    <a href="#" onclick="copyToClipboard('${source.x},${source.y}'); return false;" style="font-family:monospace; color:var(--accent)">
+                        (${source.x},${source.y})
+                    </a>
+                </div>
+                <div class="route-arrow">➔</div>
+                <div class="route-info" style="flex:1">
+                    <div style="font-size:11px; color:#aaa">TRUPPA</div>
+                    <div style="font-weight:bold; color:var(--gold)">${troop}</div>
+                </div>
+            </div>
+            <div class="res-time-box">
+                <div class="launch-label">LANCIA IL TUO ATTACCO ALLE</div>
+                <div class="launch-time">${timeStr}</div>
+                <div class="launch-date">${dateStr}</div>
+            </div>
+            <div style="text-align:center">
+                <button class="copy-btn" onclick="copyToClipboard('${targetLink}')">Copia Link Bersaglio</button>
+            </div>
+        </div>`;
+        container.innerHTML += html;
+    }
+
+    function showError(msg) {
+        const b = document.getElementById('errorBanner');
+        b.innerText = "⚠️ " + msg;
+        b.style.display = 'block';
+    }
+  </script>
 </body>
 </html>
