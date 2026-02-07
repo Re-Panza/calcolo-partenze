@@ -41,7 +41,6 @@
       -webkit-user-select: none; user-select: none;
     }
 
-    /* Input text areas selectable */
     input, textarea, .selectable { -webkit-user-select: text; user-select: text; }
 
     .wrap { max-width: 800px; margin: 0 auto; }
@@ -80,6 +79,11 @@
     .row { display: flex; gap: 15px; margin-bottom: 15px; }
     .col { flex: 1; }
 
+    /* Checkbox Style */
+    .chk-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+    .chk-label { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text); cursor: pointer; text-transform: none; }
+    .chk-label input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; }
+
     button {
       width: 100%; padding: 14px; border-radius: 12px; font-weight: 800;
       border: 1px solid var(--accent); background: rgba(96, 165, 250, .15);
@@ -103,7 +107,7 @@
     }
     .res-card::before {
         content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-        background: var(--accent);
+        background: var(--gold); /* Gold per indicare il "più lontano" */
     }
     
     .res-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
@@ -119,12 +123,12 @@
 
     .res-time-box {
         text-align: center;
-        background: rgba(96, 165, 250, 0.1);
-        border: 1px dashed var(--accent);
+        background: rgba(251, 191, 36, 0.1);
+        border: 1px dashed var(--gold);
         border-radius: 10px;
         padding: 10px;
     }
-    .launch-label { font-size: 11px; color: var(--accent); text-transform: uppercase; font-weight: bold; }
+    .launch-label { font-size: 11px; color: var(--gold); text-transform: uppercase; font-weight: bold; }
     .launch-time { font-size: 20px; font-weight: 800; color: #fff; margin: 4px 0; }
     .launch-date { font-size: 12px; color: var(--muted); }
 
@@ -139,7 +143,6 @@
         border-radius: 12px; margin-bottom: 20px; font-weight: bold; text-align: center;
     }
 
-    /* Loading Spinner */
     .loader { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--accent); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
@@ -156,7 +159,7 @@
 
   <div class="wrap">
     <header>
-      <h1>⚔️ Calcola Partenze</h1>
+      <h1>⚔️ Calcola Partenze (Max Distanza)</h1>
     </header>
 
     <div id="errorBanner"></div>
@@ -173,7 +176,7 @@
         
         <div class="row">
             <div class="col">
-                <label>Livello Strutture (Caserma/Accademia)</label>
+                <label>Livello Strutture (Città/Metro)</label>
                 <select id="structureLevel"></select>
             </div>
             <div class="col">
@@ -183,6 +186,12 @@
                     <option value="100">⚡ Velocità 100%</option>
                 </select>
             </div>
+        </div>
+
+        <div class="chk-group">
+            <label class="chk-label"><input type="checkbox" id="chkMap"> 🗺️ Mappa Area (Bonus Castelli)</label>
+            <label class="chk-label"><input type="checkbox" id="chkCompass"> 🧭 Bussola (Bonus Fortezze)</label>
+            <label class="chk-label"><input type="checkbox" id="chkManeuver"> 🐎 Manovra di Fianco (Bonus Metro)</label>
         </div>
     </div>
 
@@ -209,7 +218,7 @@
         <label>🔗 Link Bersagli (Uno per riga)</label>
         <textarea id="targetList" placeholder="Incolla qui i link dei castelli da attaccare..."></textarea>
         
-        <button class="btn-green" onclick="calculateDepartures()" style="margin-top:15px;">🚀 CALCOLA PARTENZE</button>
+        <button class="btn-green" onclick="calculateDepartures()" style="margin-top:15px;">🚀 CALCOLA PARTENZE (LONTANO)</button>
     </div>
 
     <div id="resultsArea"></div>
@@ -221,22 +230,22 @@
     <a href="https://paypal.me/Longo11" target="_blank" style="color:#60a5fa; text-decoration:none; font-weight:bold;">☕ Offrimi un caffè</a>
   </footer>
 
-  <div id="ai-assistant-container" style="position:fixed; bottom:20px; right:20px; z-index:9999;">
-    <div id="ai-window" style="display:none; position:absolute; bottom:85px; right:0; width:85vw; max-width:320px; background:var(--card); border:1px solid var(--accent); border-radius:20px; padding:15px; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
-        <div class="ai-header" style="color:var(--accent); font-weight:bold; margin-bottom:10px; display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:5px;">
-            <span>👑 Re Panza</span>
+  <div id="ai-assistant-container">
+    <div id="ai-window">
+        <div class="ai-header">
+            <span>👑 Assistente Re Panza</span>
             <span onclick="toggleAI()" style="cursor:pointer">×</span>
         </div>
-        <div id="ai-content" style="max-height:250px; overflow-y:auto; margin-bottom:10px; font-size:13px; color:var(--text);">
+        <div id="ai-content">
             <p>Ciao! Carica il tuo profilo, scegli i bersagli e ti dirò io da dove partire per arrivare puntuale come un'arrosto.</p>
         </div>
-        <div class="ai-input-area" style="display:flex; gap:5px; border-top:1px solid var(--border); padding-top:10px;">
-            <input type="text" id="ai-input" placeholder="Chiedi al Re..." style="flex:1; background:#000; border:1px solid var(--border); color:#fff; border-radius:5px; padding:8px; font-size:12px;">
-            <button id="ai-send-btn" onclick="chiediAlRe()" style="background:var(--accent); border:none; border-radius:5px; padding:5px 15px; cursor:pointer; font-weight:bold; color:#000;">Invia</button>
+        <div class="ai-input-area">
+            <input type="text" id="ai-input" placeholder="Scrivi al Re...">
+            <button id="ai-send-btn" onclick="chiediAlRe()">Invia</button>
         </div>
     </div>
-    <div id="ai-button" onclick="toggleAI()" style="width:70px; height:70px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.4); border:2px solid var(--accent); overflow:hidden;">
-        <img src="https://re-panza.github.io/lk_tool/re-panza-ai.png" alt="AI" style="width:100%; height:100%; object-fit:cover;">
+    <div id="ai-button" onclick="toggleAI()">
+        <img src="https://re-panza.github.io/lk_tool/re-panza-ai.png" alt="Re Panza AI">
     </div>
   </div>
 
@@ -298,7 +307,6 @@
             statusDiv.style.display = 'block';
             
             try {
-                // Logica URL diversa per mondo 327 (come negli altri file)
                 let urlDB = "";
                 if(worldId === "327") {
                     urlDB = "https://raw.githubusercontent.com/Re-Panza/lk_scanner/main/database_mondo_327.json";
@@ -311,7 +319,6 @@
                 
                 const rawData = await r.json();
                 WORLD_DB = [];
-                // Flatten DB se necessario
                 const flat = (n) => { 
                     if(Array.isArray(n)) n.forEach(flat); 
                     else if(n && n.x) WORLD_DB.push(n); 
@@ -327,7 +334,6 @@
             }
         }
 
-        // Filtra castelli del giocatore
         ATTACKER_CASTLES = WORLD_DB.filter(c => (c.p || c.pid || c.playerid) == playerId);
         
         if(ATTACKER_CASTLES.length > 0) {
@@ -370,68 +376,78 @@
         const speedEvent = document.getElementById('speedEvent').value === "100";
         const structLvl = parseInt(document.getElementById('structureLevel').value);
         
+        // BONUS
+        const hasMap = document.getElementById('chkMap').checked;
+        const hasCompass = document.getElementById('chkCompass').checked;
+        const hasManeuver = document.getElementById('chkManeuver').checked;
+
         const resDiv = document.getElementById('resultsArea');
         resDiv.innerHTML = "";
 
         targets.forEach((target, idx) => {
-            // 1. Trova il castello attaccante più vicino
+            // TROVA IL CASTELLO PIÙ LONTANO (MAX TEMPO)
             let bestSource = null;
-            let minTravelTime = Infinity;
+            let maxTravelTime = 0; // Cerchiamo il massimo
 
             ATTACKER_CASTLES.forEach(source => {
                 const dist = getDist(source.x, source.y, target.x, target.y);
-                if(dist === 0) return; // Se stesso
+                if(dist === 0) return; 
 
-                // Calcola velocità in base al tipo di habitat di partenza
-                const habType = getHabitatType(source.t); // 0=Castello, 2=Fortezza, 4=Città/Metro
-                const speed = calculateSpeed(troopKey, habType, structLvl, speedEvent);
+                const habType = getHabitatType(source.t); 
+                const speed = calculateSpeed(troopKey, habType, structLvl, speedEvent, hasMap, hasCompass, hasManeuver);
                 
                 const travelTimeSeconds = dist * speed;
                 
-                if(travelTimeSeconds < minTravelTime) {
-                    minTravelTime = travelTimeSeconds;
+                // LOGICA INVERTITA: CERCA IL MASSIMO
+                if(travelTimeSeconds > maxTravelTime) {
+                    maxTravelTime = travelTimeSeconds;
                     bestSource = { ...source, dist: dist, typeName: habType };
                 }
             });
 
             if(bestSource) {
-                // Calcola orari
-                const depDate = new Date(impactDateObj.getTime() - (minTravelTime * 1000));
+                const depDate = new Date(impactDateObj.getTime() - (maxTravelTime * 1000));
                 
+                // Se la data di partenza è nel passato, avvisa ma mostra lo stesso
+                if(depDate < new Date()) {
+                    // Opzionale: stile diverso per "impossibile"
+                }
+
                 renderResultCard(resDiv, idx+1, target, bestSource, depDate, troopKey);
             } else {
-                resDiv.innerHTML += `<div class="res-card"><div style="color:red">Bersaglio #${idx+1}: Nessun castello raggiungibile trovabile.</div></div>`;
+                resDiv.innerHTML += `<div class="res-card"><div style="color:red">Bersaglio #${idx+1}: Nessun castello trovato.</div></div>`;
             }
         });
     }
 
     // --- FUNZIONI DI CALCOLO VELOCITÀ ---
     function getHabitatType(t) {
-        // Mapping tipo DB -> Stringa JSON
-        // Nel JSON abbiamo: castello, fortezza, citta, metropoli
-        // Nel DB solitamente: 0=Castello, 2=Fortezza, 4=Città (o metro?)
-        // Assumiamo:
         if(t == 0) return "castello";
         if(t == 2) return "fortezza";
-        if(t == 4) return "citta"; // Assumiamo città base, metro è rara da distinguere senza altri dati
-        return "castello"; // Fallback
+        if(t == 4) return "citta"; 
+        if(t > 4) return "metropoli"; 
+        return "castello"; 
     }
 
-    function calculateSpeed(troopKey, habType, lvl, isEvent100) {
+    function calculateSpeed(troopKey, habType, lvl, isEvent100, hasMap, hasCompass, hasManeuver) {
         let base = GAME_DATA.troops_base_seconds[troopKey];
         let config = GAME_DATA.habitats[habType];
         
-        // Moltiplicatore Base (es. 1.0, 0.95)
         let factor = config.base_multiplier;
 
-        // Se Città/Metro, applica bonus livello
+        // Bonus Strutture
         if(habType === "citta" || habType === "metropoli") {
             if(config.building_levels && config.building_levels[lvl]) {
                 factor = factor * config.building_levels[lvl];
             }
         }
 
-        // Evento 100% (Dimezza tempo) -> Moltiplicatore 0.5
+        // Bonus Checkbox
+        if(habType === "castello" && hasMap) factor = factor * 0.95;
+        if(habType === "fortezza" && hasCompass) factor = factor * 0.95;
+        if(habType === "metropoli" && hasManeuver) factor = factor * 0.90;
+
+        // Evento 100%
         if(isEvent100) factor = factor * 0.5;
 
         return base * factor;
@@ -452,7 +468,6 @@
         const timeStr = depDate.toLocaleTimeString('it-IT');
         const dateStr = depDate.toLocaleDateString('it-IT');
         
-        // Copia per PC
         const targetLink = `l+k://coordinates?${target.x},${target.y}&${CURRENT_WORLD}`;
         const sourceLink = `l+k://coordinates?${source.x},${source.y}&${CURRENT_WORLD}`;
 
