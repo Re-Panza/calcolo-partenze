@@ -72,18 +72,14 @@
 </head>
 <body>
 
-  <div class="top-nav">
-    <a href="https://re-panza.github.io/lk_tool/" class="home-link">
-      <span data-lang="nav_home">🏠 Home</span>
-    </a>
-  </div>
+  <div class="top-nav"><a href="https://re-panza.github.io/lk_tool/" class="home-link">🏠 Home</a></div>
 
   <div class="wrap">
-    <header><h1 data-lang="cp_title">⚔️ Calcola Partenze</h1></header>
+    <header><h1>⚔️ Calcola Partenze</h1></header>
     <div id="errorBanner"></div>
 
     <div class="card">
-        <h2 data-lang="lbl_attacker">👤 Profilo Attaccante</h2>
+        <h2>👤 Profilo Attaccante</h2>
         <div class="row"><div class="col"><input type="text" id="attackerLink" placeholder="l+k://player?123&337" onchange="fetchAttackerData()"><div id="attackerStatus" class="tag-active" style="display:none"></div></div></div>
         <div class="row">
             <div class="col"><label>Strutture</label><select id="structureLevel"></select></div>
@@ -98,17 +94,17 @@
 
     <div class="card">
         <h2>🎯 Configurazione</h2>
-        <div class="row"><div class="col"><label data-lang="lbl_date">Data</label><input type="date" id="impactDate"></div><div class="col"><label data-lang="lbl_time">Ora</label><input type="time" id="impactTime" step="1"></div></div>
-        <div class="row"><div class="col"><label data-lang="lbl_troop">Truppa</label><select id="troopType"></select></div></div>
-        <label data-lang="lbl_targets">🔗 Link Bersagli</label>
+        <div class="row"><div class="col"><label>Data</label><input type="date" id="impactDate"></div><div class="col"><label>Ora</label><input type="time" id="impactTime" step="1"></div></div>
+        <div class="row"><div class="col"><label>Truppa</label><select id="troopType"></select></div></div>
+        <label>🔗 Link Bersagli</label>
         <textarea id="targetList" placeholder="..."></textarea>
-        <button class="btn-green" onclick="calculateDepartures()" style="margin-top:15px;" data-lang="btn_calc">CALCOLA</button>
+        <button class="btn-green" onclick="calculateDepartures()" style="margin-top:15px;">CALCOLA</button>
     </div>
 
     <div id="resultsArea"></div>
   </div>
 
-  <footer class="paypal-footer"><a href="https://paypal.me/Longo11" target="_blank" class="paypal-link" data-lang="footer_coffee">☕ PayPal</a></footer>
+  <footer class="paypal-footer"><a href="https://paypal.me/Longo11" target="_blank" class="paypal-link">☕ PayPal</a></footer>
 
   <div id="ai-assistant-container"><div id="ai-window"><div class="ai-header"><span>👑 Re Panza</span><span onclick="toggleAI()" style="cursor:pointer">×</span></div><div id="ai-content"><p>Ciao!</p></div><div class="ai-input-area"><input type="text" id="ai-input" placeholder="..."><button id="ai-send-btn" onclick="chiediAlRe()">Invia</button></div></div><div id="ai-button" onclick="toggleAI()"><img src="https://re-panza.github.io/lk_tool/re-panza-ai.png" alt="AI"></div></div>
 
@@ -185,4 +181,44 @@
                     if(config.building_levels && config.building_levels[structLvl]) factor *= config.building_levels[structLvl];
                 }
                 if(habType==="castello" && hasMap) factor *= 0.95;
-                if(habType==="fortezza"
+                if(habType==="fortezza" && hasCompass) factor *= 0.95;
+                if(habType==="metropoli" && hasManeuver) factor *= 0.90;
+                if(speedEvent) factor *= 0.5;
+
+                const travelTime = dist * (base * factor);
+                if(travelTime > maxTravelTime) {
+                    maxTravelTime = travelTime;
+                    bestSource = { ...source, dist: dist, typeName: habType };
+                }
+            });
+
+            if(bestSource) {
+                const depDate = new Date(impactDateObj.getTime() - (maxTravelTime * 1000));
+                resDiv.innerHTML += `
+                <div class="res-card">
+                    <div class="res-header">
+                        <div><div class="res-target">TARGET #${idx+1}</div><div class="res-coords">(${target.x},${target.y})</div></div>
+                        <div class="badge">${bestSource.dist} Campi</div>
+                    </div>
+                    <div class="res-route">
+                        <div style="text-align:right;flex:1"><div style="font-size:11px;color:#aaa">DA</div><b>${bestSource.typeName.toUpperCase()}</b> (${bestSource.x},${bestSource.y})</div>
+                        <div class="route-arrow">➔</div>
+                        <div style="flex:1"><div style="font-size:11px;color:#aaa">CON</div><b>${troopKey}</b></div>
+                    </div>
+                    <div class="res-time-box">
+                        <div class="launch-label">LANCIA ALLE</div>
+                        <div class="launch-time">${depDate.toLocaleTimeString('it-IT')}</div>
+                        <div class="launch-date">${depDate.toLocaleDateString('it-IT')}</div>
+                    </div>
+                    <div style="text-align:center"><button class="copy-btn" onclick="copyToClipboard('l+k://coordinates?${target.x},${target.y}&${CURRENT_WORLD}')">Copia Link</button></div>
+                </div>`;
+            } else {
+                resDiv.innerHTML += `<div class="res-card" style="color:red">Target #${idx+1}: Irraggiungibile</div>`;
+            }
+        });
+    }
+
+    function showError(msg) { document.getElementById('errorBanner').innerText = "⚠️ " + msg; document.getElementById('errorBanner').style.display = 'block'; }
+  </script>
+</body>
+</html>
