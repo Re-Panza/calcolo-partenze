@@ -386,39 +386,61 @@
         // parseInputLink, getHabitatInfo, getDist, pad sono tutti in common.js
 
         function checkDB() {
-            let val = document.getElementById('inAttacker').value;
-            let msg = document.getElementById('dbMsg');
-            let parsed = parseInputLink(val); // Da common.js
+      let lk = parseLKLink(document.getElementById('inCoord').value);
+      if (lk) {
+        let w = lk.w;
+        if (w !== worldId) {
+          worldId = w;
+          let urlC, urlN;
+          
+          // GESTIONE ECCEZIONI MONDI (es. 327 su repo diversa)
+          if (w === "327") {
+            urlC = "https://raw.githubusercontent.com/Re-Panza/lk_scanner/main/database_mondo_327.json";
+            urlN = "https://raw.githubusercontent.com/Re-Panza/scanner_classifica327/main/database_classificamondo327.json";
+            document.getElementById('areaBonusPaese').classList.add('active');
+          } else {
+            // --- CORREZIONE QUI SOTTO: rimosso 'refs/heads/' ---
+            urlC = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_mondo_${w}.json`;
+            urlN = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_classificamondo${w}.json`;
+            
+            document.getElementById('areaBonusPaese').classList.remove('active');
+            document.getElementById('selCountryBonus').value = "1";
+          }
 
-            if (parsed) {
-                if(parsed.type !== 'player') { msg.innerText = "⚠ Usa link 'player' per identificarti."; msg.className = "db-status error"; }
-                let w = parsed.w;
-                if (w !== worldId) {
-                    worldId = w;
-                    msg.className = "db-status loading";
-                    msg.innerText = `Scarico DB Mondo ${w}...`;
-                    
-                    let urlC, urlN;
-                    if (w === "327") {
-                        urlC = "https://https://github.com/Re-Panza/lk_database/database_mondo_327.json";
-                        urlN = "https://raw.githubusercontent.com/Re-Panza/scanner_classifica327/main/database_classificamondo327.json";
-                    } else {
-                        urlC = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_mondo_${w}.json`;
-                        urlN = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_classificamondo${w}.json`;
-                    }
+          // Aggiorno status visuale (opzionale se hai l'elemento dbStatus)
+          let statusEl = document.getElementById('dbStatus');
+          if(statusEl) { statusEl.style.display = 'block'; statusEl.innerText = `Scarico Mondo ${w}...`; }
 
-                    Promise.all([fetch(urlC + "?v=" + Date.now()).then(r => r.json()), fetch(urlN + "?v=" + Date.now()).then(r => r.json())])
-                    .then(([cD, nD]) => {
-                        DB = [];
-                        const f = (n) => { if (Array.isArray(n)) n.forEach(f); else if (n && n.x) { n.p = n.p || n.pid || 0; DB.push(n); } else if (typeof n === 'object') Object.values(n).forEach(f); }; 
-                        f(cD);
-                        PLAYER_NAMES = {};
-                        if (Array.isArray(nD)) nD.forEach(p => { PLAYER_NAMES[p.id || p.p] = p.nick || p.name || p.n; });
-                        identifyUser(parsed, msg);
-                    }).catch((err) => { msg.className = "db-status error"; msg.innerText = "Errore DB"; });
-                } else { identifyUser(parsed, msg); }
-            } else { msg.className = "db-status"; msg.innerText = ""; msg.style.display="none"; }
+          Promise.all([
+            fetch(urlC + "?v=" + Date.now()).then(r => {
+                if (!r.ok) throw new Error("DB Mondo non trovato");
+                return r.json();
+            }), 
+            fetch(urlN + "?v=" + Date.now()).then(r => {
+                if (!r.ok) throw new Error("DB Classifica non trovato");
+                return r.json();
+            })
+          ])
+            .then(([cD, nD]) => {
+              DB = [];
+              const f = (n) => {
+                if (Array.isArray(n)) n.forEach(f);
+                else if (n && n.x) { n.p = n.p || n.pid || 0; DB.push(n); }
+                else if (typeof n === 'object') Object.values(n).forEach(f);
+              }; f(cD);
+              
+              PLAYER_NAMES = {};
+              if (Array.isArray(nD)) nD.forEach(p => { PLAYER_NAMES[p.id || p.p] = p.nick || p.name || p.n; });
+              
+              if(statusEl) { statusEl.innerText = `✅ Mondo ${w} Caricato!`; setTimeout(()=>statusEl.style.display='none', 2000); }
+            })
+            .catch((e) => { 
+                console.error(e);
+                if(statusEl) { statusEl.innerText = `❌ Errore: Dati Mondo ${w} non trovati.`; }
+            });
         }
+      }
+    }
 
         function identifyUser(parsed, msgElement) {
             myPID = null; myCastles = [];
@@ -678,5 +700,6 @@
     </script>
 </body>
 </html>
+
 
 
