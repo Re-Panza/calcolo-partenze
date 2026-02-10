@@ -375,7 +375,7 @@
         // Caricamento Dati Truppe
         async function loadGameData() {
             try {
-                const response = await fetch('https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_truppe.json?v=' + Date.now());
+                const response = await fetch('https://github.com/Re-Panza/lk_database/database_truppe.json?v=' + Date.now());
                 if (!response.ok) throw new Error("Errore HTTP: " + response.status);
                 GAME_DATA = (await response.json()).game_config;
             } catch (e) { console.error(e); }
@@ -400,7 +400,7 @@
                     
                     let urlC, urlN;
                     if (w === "327") {
-                        urlC = "https://raw.githubusercontent.com/Re-Panza/lk_scanner/main/database_mondo_327.json";
+                        urlC = "https://https://github.com/Re-Panza/lk_database/database_mondo_327.json";
                         urlN = "https://raw.githubusercontent.com/Re-Panza/scanner_classifica327/main/database_classificamondo327.json";
                     } else {
                         urlC = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_mondo_${w}.json`;
@@ -678,4 +678,5 @@
     </script>
 </body>
 </html>
+
 
