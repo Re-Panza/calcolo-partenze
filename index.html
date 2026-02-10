@@ -31,253 +31,61 @@
             --dangerBg: rgba(239, 68, 68, .12);
         }
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            margin: 0;
-            font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-            background: radial-gradient(1200px 600px at 20% 0%, rgba(96, 165, 250, .25), transparent 60%),
-                radial-gradient(1000px 500px at 90% 10%, rgba(52, 211, 153, .18), transparent 55%),
-                var(--bg);
-            color: var(--text);
-            padding: env(safe-area-inset-top, 20px) 20px 40px 20px;
-            -webkit-user-select: none;
-            user-select: none;
-            touch-action: manipulation;
-            line-height: 1.5;
-        }
-
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: rgba(17, 28, 51, .80);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 24px;
-            border-radius: 24px;
-            border: 1px solid var(--border);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, .3);
-        }
-
-        .nav-header {
-            max-width: 500px;
-            margin: 0 auto 20px auto;
-            display: flex;
-            justify-content: flex-start;
-        }
-
-        .btn-home {
-            text-decoration: none;
-            color: var(--accent);
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 16px;
-        }
-
-        .page-title {
-            max-width: 500px;
-            margin: 0 auto 24px auto;
-            text-align: left;
-        }
-
-        .page-title h2 {
-            font-size: 24px;
-            font-weight: 800;
-            color: #fff;
-            margin: 0 0 5px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: radial-gradient(1200px 600px at 20% 0%, rgba(96, 165, 250, .25), transparent 60%), radial-gradient(1000px 500px at 90% 10%, rgba(52, 211, 153, .18), transparent 55%), var(--bg); color: var(--text); padding: env(safe-area-inset-top, 20px) 20px 80px 20px; -webkit-user-select: none; user-select: none; }
         
-        .page-title p {
-            color: var(--muted);
-            margin: 0;
-            font-size: 14px;
-        }
+        .container { max-width: 500px; margin: 0 auto; background: rgba(17, 28, 51, .80); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 24px; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0, 0, 0, .3); }
+        .nav-header { max-width: 500px; margin: 0 auto 20px auto; display: flex; justify-content: flex-start; }
+        .btn-home { text-decoration: none; color: var(--accent); font-weight: 700; display: inline-flex; align-items: center; gap: 8px; font-size: 16px; }
+        .page-title { max-width: 500px; margin: 0 auto 24px auto; text-align: left; }
+        .page-title h2 { font-size: 24px; font-weight: 800; color: #fff; margin: 0 0 5px 0; display: flex; align-items: center; gap: 8px; }
+        .page-title p { color: var(--muted); margin: 0; font-size: 14px; }
 
-        /* INPUT STYLES */
-        input, select, textarea {
-            width: 100%;
-            padding: 16px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            background: rgba(255, 255, 255, .05);
-            color: var(--text);
-            outline: none;
-            font-size: 15px;
-            font-family: inherit;
-            transition: border-color 0.2s;
-            font-weight: 500;
-        }
+        input, select, textarea { width: 100%; padding: 16px; border-radius: 16px; border: 1px solid var(--border); background: rgba(255, 255, 255, .05); color: var(--text); outline: none; font-size: 15px; font-family: inherit; font-weight: 500; }
+        input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+        textarea { resize: vertical; min-height: 100px; }
+        select option { background-color: var(--card); color: #fff; }
+        label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; margin-top: 16px; text-transform: uppercase; font-weight: 700; }
         
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--accent);
-        }
+        .btn-cerca { width: 100%; padding: 16px; background: var(--accent); border: none; font-weight: 800; font-size: 17px; border-radius: 16px; cursor: pointer; color: #0f172a; margin-top: 24px; text-transform: uppercase; transition: 0.2s; }
+        .btn-cerca:active { transform: scale(0.98); opacity: 0.9; }
 
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-        
-        select option {
-            background-color: var(--card);
-            color: #fff;
-        }
-
-        label {
-            display: block;
-            font-size: 12px;
-            color: var(--muted);
-            margin-bottom: 6px;
-            margin-top: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 700;
-        }
-        label:first-of-type { margin-top: 0; }
-
-        .btn-cerca {
-            width: 100%;
-            padding: 16px;
-            background: var(--accent);
-            border: none;
-            font-weight: 800;
-            font-size: 17px;
-            border-radius: 16px;
-            cursor: pointer;
-            color: #0f172a;
-            margin-top: 24px;
-            transition: transform 0.1s, opacity 0.2s;
-            text-transform: uppercase;
-        }
-
-        .btn-cerca:active {
-            transform: scale(0.98);
-            opacity: 0.9;
-        }
-
-        /* STATUS MESSAGES */
-        .db-status {
-            font-size: 13px;
-            font-weight: 600;
-            margin-top: 8px;
-            padding: 10px;
-            border-radius: 12px;
-            display: none;
-            text-align: center;
-        }
+        .db-status { font-size: 13px; font-weight: 600; margin-top: 8px; padding: 10px; border-radius: 12px; display: none; text-align: center; }
         .db-status.loading { display: block; background: rgba(251, 191, 36, 0.1); color: var(--gold); border: 1px solid rgba(251, 191, 36, 0.3); }
         .db-status.success { display: block; background: rgba(52, 211, 153, 0.1); color: var(--success); border: 1px solid rgba(52, 211, 153, 0.3); }
         .db-status.error { display: block; background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
 
-        /* RISULTATI */
-        #resArea {
-            margin-top: 24px;
-        }
-
-        .target-card {
-            background: rgba(255, 255, 255, .03);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            overflow: hidden;
-            margin-bottom: 16px;
-        }
-
-        .accordion-header {
-            padding: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
+        .target-card { background: rgba(255, 255, 255, .03); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 16px; }
+        .accordion-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .accordion-header:active { background: rgba(255, 255, 255, 0.05); }
-
-        .t-name { font-weight: 700; color: #fff; font-size: 16px; }
-        .t-castle { font-size: 13px; color: var(--muted); margin-top: 2px; font-style: italic; }
-        .t-link-coord {
-            font-family: monospace; font-size: 11px; color: var(--accent);
-            text-decoration: none; display: block; margin-top: 4px; opacity: 0.7;
-        }
-
-        .accordion-content {
-            display: none;
-            padding: 16px;
-            background: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid var(--border);
-        }
+        .accordion-content { display: none; padding: 16px; background: rgba(0, 0, 0, 0.2); border-top: 1px solid var(--border); }
         .accordion-content.open { display: block; animation: slideDown 0.3s ease-out; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .source-info-box {
-            background: rgba(251, 191, 36, 0.1); 
-            border: 1px solid rgba(251, 191, 36, 0.3);
-            border-radius: 12px; padding: 12px; margin-bottom: 16px;
-            display: flex; align-items: center; gap: 12px;
-        }
-        .hab-icon { font-size: 24px; }
-        .source-label { font-size: 11px; color: var(--gold); text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
-        .source-name { font-size: 15px; font-weight: 700; color: #fff; margin: 2px 0; }
-        .source-coords { font-family: monospace; font-size: 13px; color: #ccc; }
-
-        .config-section {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px;
-            margin-top: 12px;
-        }
-
+        .t-name { font-weight: 700; color: #fff; font-size: 16px; }
+        .t-castle { font-size: 13px; color: var(--muted); margin-top: 2px; font-style: italic; }
+        .t-link-coord { font-family: monospace; font-size: 11px; color: var(--accent); text-decoration: none; display: block; margin-top: 4px; opacity: 0.7; }
+        
+        .source-info-box { background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 12px; padding: 12px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+        .config-section { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-top: 12px; }
         .bonus-area { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .bonus-area.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-
+        .bonus-area.active { display: block; }
         .chk-label { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #ddd; cursor: pointer; margin-bottom: 8px; }
         .chk-label input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
-
-        .result-box {
-            margin-top: 16px; padding: 16px; background: rgba(52, 211, 153, 0.1);
-            border: 1px solid var(--success); border-radius: 12px;
-            text-align: center; display: none; animation: fadeIn 0.3s;
-        }
+        
+        .result-box { margin-top: 16px; padding: 16px; background: rgba(52, 211, 153, 0.1); border: 1px solid var(--success); border-radius: 12px; text-align: center; display: none; }
         .result-box.visible { display: block; }
+        .launch-window-simple { margin: 8px 0; font-size: 15px; color: #ddd; line-height: 1.6; }
+        .launch-window-simple b { font-size: 16px; color: #fff; font-family: monospace; border-bottom: 1px dotted rgba(255,255,255,0.3); }
+        .launch-btn { display: block; width: 100%; text-align: center; background: var(--gold); color: #000; text-decoration: none; padding: 14px; border-radius: 12px; font-weight: 800; margin-top: 16px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3); }
 
-        .launch-window-simple {
-            margin: 8px 0; font-size: 15px; color: #ddd; line-height: 1.6;
-        }
-        .launch-window-simple b {
-            font-size: 16px; color: #fff; font-family: monospace; display: inline-block;
-            border-bottom: 1px dotted rgba(255,255,255,0.3);
-        }
-
-        .launch-btn {
-            display: block; width: 100%; text-align: center;
-            background: var(--gold); color: #000; text-decoration: none;
-            padding: 14px; border-radius: 12px; font-weight: 800;
-            margin-top: 16px; text-transform: uppercase; letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
-        }
-
-        /* --- STILE FOOTER & PAYPAL --- */
-        .paypal-footer {
-            text-align: center; margin-top: 40px; padding: 30px 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .paypal-link {
-            text-decoration: none; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; gap: 10px;
-            transition: all 0.3s ease; color: #fff !important; background: #0070ba; padding: 12px 28px; border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(0, 112, 186, 0.3); border: none;
-        }
-        .paypal-link:hover { background: #005ea6; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 112, 186, 0.5); }
-
-        /* --- STILE ASSISTENTE AI --- */
+        .paypal-footer { text-align: center; margin-top: 40px; padding: 30px 20px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .paypal-link { text-decoration: none; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; gap: 10px; color: #fff !important; background: #0070ba; padding: 12px 28px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0, 112, 186, 0.3); }
+        .hidden { display: none !important; }
+        
+        /* AI Assistant */
         #ai-assistant-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
-        #ai-button { width: 65px; height: 65px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); overflow: hidden; border: 2px solid var(--accent); }
+        #ai-button { width: 65px; height: 65px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); border: 2px solid var(--accent); overflow: hidden; }
         #ai-button img { width: 100%; height: 100%; object-fit: cover; }
         #ai-window { display: none; position: absolute; bottom: 80px; right: 0; width: 85vw; max-width: 320px; background: var(--card); border: 1px solid var(--accent); border-radius: 20px; padding: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px); }
         .ai-header { color: var(--accent); font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
@@ -285,8 +93,6 @@
         .ai-input-area { display: flex; gap: 5px; border-top: 1px solid var(--border); padding-top: 10px; }
         #ai-input { flex: 1; background: #000; border: 1px solid var(--border); color: #fff; border-radius: 5px; padding: 8px; font-size: 12px; }
         #ai-send-btn { background: var(--accent); border: none; border-radius: 5px; padding: 5px 15px; cursor: pointer; font-weight: bold; color: #000; }
-        
-        .hidden { display: none !important; }
     </style>
 </head>
 
@@ -321,7 +127,7 @@
             </div>
         </div>
 
-        <button class="btn-cerca" onclick="runWithSponsor(startCalc)">CALCOLA TARGETS</button>
+        <button class="btn-cerca" onclick="startCalc()">CALCOLA TARGETS</button>
 
         <div id="resArea" class="hidden">
             <div style="text-align:center; padding:12px; background:rgba(255,255,255,0.05); border-radius:12px; margin-bottom:20px; border:1px solid var(--border);">
@@ -383,13 +189,18 @@
         window.onload = () => { loadGameData(); };
 
         // --- FUNZIONE checkDB CORRETTA ---
+        // Scarica il database corretto in base al mondo (327 su lk_scanner, altri su lk_database)
         function checkDB() {
             let val = document.getElementById('inAttacker').value;
             let msg = document.getElementById('dbMsg');
             let parsed = parseInputLink(val); // Da common.js
 
             if (parsed) {
-                if(parsed.type !== 'player') { msg.innerText = "⚠ Usa link 'player' per identificarti."; msg.className = "db-status error"; return; }
+                if(parsed.type !== 'player') { 
+                    msg.innerText = "⚠ Usa link 'player' per identificarti."; 
+                    msg.className = "db-status error"; 
+                    return; 
+                }
                 
                 let w = parsed.w;
                 if (w !== worldId) {
@@ -397,17 +208,19 @@
                     msg.className = "db-status loading";
                     msg.innerText = `Scarico DB Mondo ${w}...`;
                     
-                    // --- CONFIGURAZIONE REPOSITORY ---
-                    let repoBase = "https://raw.githubusercontent.com/Re-Panza/lk_database/main"; // Default (337, 296...)
-                    
-                    // ECCEZIONE MONDO 327
-                    if (w === "327") {
-                        repoBase = "https://raw.githubusercontent.com/Re-Panza/lk_scanner/main";
-                    }
+                    let urlMondo = "";
+                    let urlClassifica = "";
 
-                    // Costruzione URL corretta senza refs/heads
-                    let urlMondo = `${repoBase}/database_mondo_${w}.json`;
-                    let urlClassifica = `${repoBase}/database_classificamondo${w}.json`;
+                    // LOGICA DI SELEZIONE REPO
+                    if (w === "327") {
+                        // Mondo 327 -> lk_scanner
+                        urlMondo = "https://raw.githubusercontent.com/Re-Panza/lk_scanner/main/database_mondo_327.json";
+                        urlClassifica = "https://raw.githubusercontent.com/Re-Panza/scanner_classifica327/main/database_classificamondo327.json";
+                    } else {
+                        // Altri mondi (es. 337, 296) -> lk_database
+                        urlMondo = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_mondo_${w}.json`;
+                        urlClassifica = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_classificamondo${w}.json`;
+                    }
 
                     Promise.all([
                         fetch(urlMondo + "?v=" + Date.now()).then(r => {
@@ -431,7 +244,7 @@
                     }).catch((err) => { 
                         console.error(err);
                         msg.className = "db-status error"; 
-                        msg.innerText = `Errore: Impossibile scaricare DB Mondo ${w}`; 
+                        msg.innerText = `Errore: Impossibile scaricare DB Mondo ${w}. Controlla che esista.`; 
                     });
                 } else { identifyUser(parsed, msg); }
             } else { 
@@ -530,7 +343,6 @@
             document.getElementById('displayImpactTime').innerText = 
                 `${pad(impactDate.getDate())}/${pad(impactDate.getMonth()+1)} ore ${pad(impactDate.getHours())}:${pad(impactDate.getMinutes())}`;
             
-            // Scroll to results
             document.getElementById('resArea').scrollIntoView({ behavior: 'smooth' });
             renderResults();
         }
@@ -619,7 +431,6 @@
                     </div>
 
                     <div class="accordion-content">
-                        
                         <div class="source-info-box">
                             <div class="hab-icon">${t.habIcon}</div>
                             <div style="flex:1">
@@ -629,10 +440,8 @@
                                 <a href="${sourceLink}" style="font-size:11px; color:var(--accent); text-decoration:none;">${sourceLink}</a>
                             </div>
                         </div>
-
                         <label>Configura Truppa</label>
                         <select id="selTroop_${i}" onchange="calculateRow(${i})" style="margin-bottom:10px;">${troopOpts}</select>
-
                         <div class="config-section">
                             <div style="margin-bottom:8px;">
                                 <label style="margin-top:0">Bonus Paese (Sentieri)</label>
@@ -640,7 +449,6 @@
                             </div>
                             ${bonusHtml}
                         </div>
-
                         <div id="resBox_${i}" class="result-box"></div>
                     </div>
                 `;
@@ -651,9 +459,6 @@
         function toggleAccordion(header) {
             let content = header.nextElementSibling;
             const isOpen = content.style.display === "block";
-            
-            // Close all others? (Optional - keeping multiple open is usually better for comparison)
-            
             if(isOpen) {
                 content.style.display = "none";
                 header.querySelector('div:last-child').style.transform = 'rotate(0deg)';
@@ -671,9 +476,8 @@
             
             let targetData = targetsList[idx];
             let speed = getSpeedForCard(idx, troopKey);
-            
             let travelSec = targetData.dist * speed;
-            let travelSecSafe = travelSec * 1.05; // 5% delay
+            let travelSecSafe = travelSec * 1.05; 
             
             let dVal = document.getElementById('inDate').value;
             let tVal = document.getElementById('inTime').value;
@@ -682,7 +486,6 @@
             let depTimeExact = new Date(impactTime - (travelSec * 1000));
             let depTimeSafe = new Date(impactTime - (travelSecSafe * 1000));
             
-            // pad() da common.js
             const fmt = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} del ${pad(d.getDate())}/${pad(d.getMonth()+1)}`;
             
             let strExact = fmt(depTimeExact);
