@@ -31,7 +31,8 @@
         .btn-home { text-decoration: none; color: var(--accent); font-weight: 700; display: inline-flex; align-items: center; gap: 8px; font-size: 16px; }
         .page-title { max-width: 500px; margin: 0 auto 24px auto; text-align: left; }
         .page-title h2 { font-size: 24px; font-weight: 800; color: #fff; margin: 0 0 5px 0; display: flex; align-items: center; gap: 8px; }
-        
+        .page-title p { color: var(--muted); margin: 0; font-size: 14px; }
+
         input, select, textarea { width: 100%; padding: 16px; border-radius: 16px; border: 1px solid var(--border); background: rgba(255, 255, 255, .05); color: var(--text); outline: none; font-size: 15px; font-family: inherit; font-weight: 500; }
         input:focus, select:focus, textarea:focus { border-color: var(--accent); }
         textarea { resize: vertical; min-height: 100px; }
@@ -41,8 +42,10 @@
         .btn-cerca { width: 100%; padding: 16px; background: var(--accent); border: none; font-weight: 800; font-size: 17px; border-radius: 16px; cursor: pointer; color: #0f172a; margin-top: 24px; text-transform: uppercase; transition: 0.2s; }
         .btn-cerca:active { transform: scale(0.98); opacity: 0.9; }
 
-        .db-status { font-size: 12px; font-weight: 600; margin-top: 8px; padding: 12px; border-radius: 12px; display: none; text-align: left; word-break: break-all; line-height: 1.5; font-family: monospace; background: rgba(0,0,0,0.3); border: 1px solid var(--border); }
-        .status-line { display: block; margin-bottom: 2px; }
+        .db-status { font-size: 13px; font-weight: 600; margin-top: 8px; padding: 10px; border-radius: 12px; display: none; text-align: center; }
+        .db-status.loading { display: block; background: rgba(251, 191, 36, 0.1); color: var(--gold); border: 1px solid rgba(251, 191, 36, 0.3); }
+        .db-status.success { display: block; background: rgba(52, 211, 153, 0.1); color: var(--success); border: 1px solid rgba(52, 211, 153, 0.3); }
+        .db-status.error { display: block; background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
 
         .target-card { background: rgba(255, 255, 255, .03); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 16px; }
         .accordion-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
@@ -71,6 +74,7 @@
         .paypal-link { text-decoration: none; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; gap: 10px; color: #fff !important; background: #0070ba; padding: 12px 28px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0, 112, 186, 0.3); }
         .hidden { display: none !important; }
         
+        /* AI Assistant */
         #ai-assistant-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
         #ai-button { width: 65px; height: 65px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); border: 2px solid var(--accent); overflow: hidden; }
         #ai-button img { width: 100%; height: 100%; object-fit: cover; }
@@ -164,16 +168,6 @@
         let myCastles = [];
         let targetsList = [];
 
-        function logStatus(msg, type='info') {
-            const el = document.getElementById('dbMsg');
-            el.style.display = 'block';
-            let color = '#ccc';
-            if(type==='err') color = '#ef4444';
-            if(type==='ok') color = '#34d399';
-            el.innerHTML += `<span class="status-line" style="color:${color}">${msg}</span>`;
-        }
-        function clearStatus() { document.getElementById('dbMsg').innerHTML = ''; }
-
         async function loadGameData() {
             try {
                 const response = await fetch('https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_truppe.json?v=' + Date.now());
@@ -183,106 +177,84 @@
         }
         window.onload = () => { loadGameData(); };
 
-        // --- FUNZIONE PRINCIPALE: CHECK DB ---
+        // --- FUNZIONE CHECK DB (Clean) ---
         function checkDB() {
             let val = document.getElementById('inAttacker').value;
-            // Estrae coordinate e mondo anche se il testo è "sporco"
-            let lk = val.match(/coordinates\?(\d+),(\d+)&(\d+)/);
-            let parsed = null;
+            let msg = document.getElementById('dbMsg');
+            let parsed = typeof parseInputLink === 'function' ? parseInputLink(val) : null;
 
-            if (lk) {
-                // Caso Link Coordinate
-                parsed = { type: 'coord', x: parseInt(lk[1]), y: parseInt(lk[2]), w: lk[3] };
-            } else {
-                // Caso Link Giocatore
-                let lp = val.match(/player\?(\d+)&(\d+)/);
-                if(lp) parsed = { type: 'player', id: parseInt(lp[1]), w: lp[2] };
-            }
-
-            if (!parsed) {
-                if (val.length > 10) { clearStatus(); logStatus("⚠ Link non riconosciuto.", 'err'); }
-                return;
-            }
-
-            let w = parsed.w;
-            
-            // Scarica se mondo diverso OPPURE se DB è vuoto (errore precedente)
-            if (w !== worldId || DB.length === 0) {
-                worldId = w;
-                clearStatus();
-                logStatus(`🌍 Mondo ${w} rilevato. Download dati...`, 'info');
-                
-                let urlMondo = "";
-                let urlClassifica = "";
-
-                if (w === "327") {
-                    urlMondo = "https://raw.githubusercontent.com/Re-Panza/lk_scanner/main/database_mondo_327.json";
-                    urlClassifica = "https://raw.githubusercontent.com/Re-Panza/scanner_classifica327/main/database_classificamondo327.json";
-                } else {
-                    urlMondo = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_mondo_${w}.json`;
-                    urlClassifica = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_classificamondo${w}.json`;
+            if (parsed) {
+                if(parsed.type !== 'player') { 
+                    msg.innerText = "⚠ Usa link 'player' per identificarti."; 
+                    msg.className = "db-status error"; 
+                    msg.style.display = 'block';
+                    return; 
                 }
+                
+                let w = parsed.w;
+                if (w !== worldId) {
+                    worldId = w;
+                    msg.className = "db-status loading";
+                    msg.innerText = `Scarico DB Mondo ${w}...`;
+                    msg.style.display = 'block';
+                    
+                    let urlMondo = "";
+                    let urlClassifica = "";
 
-                Promise.all([
-                    fetch(urlMondo + "?v=" + Date.now()).then(r => {
-                        if (!r.ok) throw new Error(`File non trovato: ${urlMondo}`);
-                        return r.json();
-                    }), 
-                    fetch(urlClassifica + "?v=" + Date.now()).then(r => {
-                        if (!r.ok) return [];
-                        return r.json();
-                    })
-                ])
-                .then(([cD, nD]) => {
-                    DB = [];
-                    const f = (n) => { 
-                        if (Array.isArray(n)) n.forEach(f); 
-                        else if (n && n.x) { n.p = n.p || n.pid || 0; DB.push(n); } 
-                        else if (typeof n === 'object') Object.values(n).forEach(f); 
-                    }; 
-                    f(cD);
-                    
-                    PLAYER_NAMES = {};
-                    if (Array.isArray(nD)) nD.forEach(p => { PLAYER_NAMES[p.id || p.p] = p.nick || p.name || p.n; });
-                    
-                    logStatus(`✅ DB Scaricato (${DB.length} castelli).`, 'ok');
-                    identifyUser(parsed);
-                }).catch((err) => { 
-                    console.error(err);
-                    logStatus(`❌ ERRORE: ${err.message}`, 'err');
-                });
+                    if (w === "327") {
+                        urlMondo = "https://raw.githubusercontent.com/Re-Panza/lk_scanner/main/database_mondo_327.json";
+                        urlClassifica = "https://raw.githubusercontent.com/Re-Panza/scanner_classifica327/main/database_classificamondo327.json";
+                    } else {
+                        urlMondo = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_mondo_${w}.json`;
+                        urlClassifica = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_classificamondo${w}.json`;
+                    }
+
+                    Promise.all([
+                        fetch(urlMondo + "?v=" + Date.now()).then(r => {
+                            if (!r.ok) throw new Error("DB Mondo mancante");
+                            return r.json();
+                        }), 
+                        fetch(urlClassifica + "?v=" + Date.now()).then(r => {
+                            if (!r.ok) return [];
+                            return r.json();
+                        })
+                    ])
+                    .then(([cD, nD]) => {
+                        DB = [];
+                        const f = (n) => { 
+                            if (Array.isArray(n)) n.forEach(f); 
+                            else if (n && n.x) { n.p = n.p || n.pid || 0; DB.push(n); } 
+                            else if (typeof n === 'object') Object.values(n).forEach(f); 
+                        }; 
+                        f(cD);
+                        
+                        PLAYER_NAMES = {};
+                        if (Array.isArray(nD)) nD.forEach(p => { PLAYER_NAMES[p.id || p.p] = p.nick || p.name || p.n; });
+                        
+                        identifyUser(parsed, msg);
+                    }).catch((err) => { 
+                        console.error(err);
+                        msg.className = "db-status error"; 
+                        msg.innerText = `Errore: Impossibile scaricare DB Mondo ${w}`; 
+                    });
+                } else { identifyUser(parsed, msg); }
             } else { 
-                // DB già in memoria, identifica solo
-                clearStatus();
-                identifyUser(parsed); 
+                msg.style.display="none"; 
             }
         }
 
-        function identifyUser(parsed) {
+        function identifyUser(parsed, msgElement) {
             myPID = null; myCastles = [];
-            
-            if (parsed.type === 'player') {
-                myPID = parsed.id;
-                logStatus(`🔍 Cerco giocatore ID ${myPID}...`, 'info');
-            } else if (parsed.type === 'coord') {
-                logStatus(`🔍 Cerco proprietario castello ${parsed.x},${parsed.y}...`, 'info');
-                let me = DB.find(c => c.x === parsed.x && c.y === parsed.y);
-                if(me) {
-                    myPID = me.p;
-                    logStatus(`👉 Castello trovato! Proprietario ID: ${myPID}`, 'ok');
-                } else {
-                    logStatus(`❌ Castello ${parsed.x},${parsed.y} non trovato nel DB.`, 'err');
-                }
-            }
+            if (parsed.type === 'player') myPID = parsed.id;
             
             if (myPID) {
                 myCastles = DB.filter(c => c.p === myPID);
                 if (myCastles.length > 0) {
-                    let name = PLAYER_NAMES[myPID] || "Sconosciuto";
-                    logStatus(`✅ UTENTE TROVATO: ${name}`, 'ok');
-                    logStatus(`🏰 ${myCastles.length} castelli pronti per l'attacco.`, 'ok');
+                    msgElement.className = "db-status success";
+                    msgElement.innerText = `✅ Identificato: ${PLAYER_NAMES[myPID] || "Giocatore"} (${myCastles.length} castelli)`;
                 } else { 
-                    logStatus(`⚠ ID ${myPID} trovato, ma non ha castelli in questo DB.`, 'err'); 
+                    msgElement.className = "db-status error"; 
+                    msgElement.innerText = `⚠ Nessun castello trovato per ID ${myPID}`; 
                 }
             }
         }
@@ -324,17 +296,16 @@
             targetsList = [];
             
             rawTargets.forEach(line => {
-                let lk = line.match(/coordinates\?(\d+),(\d+)&(\d+)/);
-                if(lk) {
-                    let tx = parseInt(lk[1]), ty = parseInt(lk[2]);
-                    let targetObj = DB.find(c => c.x === tx && c.y === ty);
+                let lk = (typeof parseInputLink === 'function') ? parseInputLink(line) : null;
+                if(lk && lk.type === 'coord') {
+                    let targetObj = DB.find(c => c.x === lk.x && c.y === lk.y);
                     let tName = targetObj ? (PLAYER_NAMES[targetObj.p] || targetObj.n || "Sconosciuto") : "Coordinate";
                     let tCastleName = targetObj && targetObj.n ? targetObj.n : "Castello";
                     
                     let bestSource = null;
                     let maxDist = -1;
                     myCastles.forEach(source => {
-                        let d = getDist(source.x, source.y, tx, ty); 
+                        let d = getDist(source.x, source.y, lk.x, lk.y); 
                         if(d > maxDist) { maxDist = d; bestSource = source; }
                     });
 
@@ -343,7 +314,7 @@
                     let sName = bestSource.n || "Mio Castello";
 
                     targetsList.push({ 
-                        coords: {x:tx, y:ty}, 
+                        coords: lk, 
                         name: tName, 
                         castleName: tCastleName,
                         source: bestSource,
@@ -356,7 +327,7 @@
                 }
             });
 
-            if(targetsList.length === 0) return alert("Nessun target valido inserito.");
+            if(targetsList.length === 0) return alert("Nessun target valido inserito nel box.");
 
             document.getElementById('resArea').classList.remove('hidden');
             let impactDate = new Date(dVal + "T" + tVal);
