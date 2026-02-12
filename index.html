@@ -1,77 +1,194 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mappa Unificata Mondo 327</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Mappa Mondo 327</title>
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
+
     <style>
-        body { margin: 0; padding: 0; display: flex; height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
-        
-        /* Sidebar laterale */
+        /* --- STILE PRESO DAL TUO INDEX ORIGINALE --- */
+        :root {
+            --bg: #0f172a;
+            --card: #111c33;
+            --muted: #93a4c7;
+            --text: #e8eefc;
+            --accent: #60a5fa;
+            --border: rgba(255, 255, 255, 0.1);
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Scura */
         #sidebar {
             width: 320px;
-            background: #f8f9fa;
-            border-right: 1px solid #ddd;
+            background-color: var(--card);
+            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             padding: 15px;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
             z-index: 1001;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--accent);
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* Statistiche */
+        .stats-box {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        /* Input stilizzati come il tuo tool */
+        .search-group { margin-bottom: 15px; }
+        .search-group label {
+            display: block;
+            color: var(--muted);
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
         }
         
-        #map { flex-grow: 1; height: 100%; background: #e5e5e5; }
-
-        h2 { margin-top: 0; color: #2c3e50; font-size: 1.4rem; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
         
-        .stats-box { font-size: 0.85rem; color: #666; margin-bottom: 15px; background: #fff; padding: 10px; border-radius: 5px; border: 1px solid #eee; }
-        
-        .search-group { margin-bottom: 15px; }
-        .search-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
-        .search-group input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
 
-        /* Lista risultati */
+        /* Lista Risultati Scura */
         #results-container { 
             flex-grow: 1; 
             overflow-y: auto; 
-            border: 1px solid #ddd; 
-            background: #fff;
-            border-radius: 4px;
+            margin-top: 10px;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
         }
-        
-        .result-item {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .result-item:hover { background: #f0f8ff; }
-        .res-name { font-weight: bold; color: #2c3e50; font-size: 0.95rem; }
-        .res-status { font-size: 0.75rem; font-weight: bold; margin-left: 5px; text-transform: uppercase; }
-        .status-active { color: green; }
-        .status-inactive { color: red; }
-        
-        .res-coord { float: right; font-family: monospace; color: #555; background: #eee; padding: 2px 5px; border-radius: 3px; }
-        .res-info { font-size: 0.85rem; color: #7f8c8d; margin-top: 4px; }
 
+        /* Scrollbar custom */
+        #results-container::-webkit-scrollbar { width: 6px; }
+        #results-container::-webkit-scrollbar-track { background: var(--bg); }
+        #results-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .result-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .result-item:hover {
+            background: rgba(96, 165, 250, 0.1); /* Accent color low opacity */
+            border-color: var(--accent);
+        }
+
+        .res-name { 
+            font-weight: bold; 
+            color: var(--accent); 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .res-coord { 
+            font-family: monospace; 
+            color: var(--text); 
+            background: rgba(0,0,0,0.3); 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-size: 0.9em;
+        }
+
+        .res-info { 
+            font-size: 0.8rem; 
+            color: var(--muted); 
+            margin-top: 5px; 
+        }
+
+        .status-tag {
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+        .tag-active { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+        .tag-inactive { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+        /* Mappa */
+        #map { flex-grow: 1; height: 100%; background: #0b1120; }
+        
+        /* Popup della mappa scuri */
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background: var(--card);
+            color: var(--text);
+            box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+        }
+        .leaflet-popup-content { margin: 15px; }
+        .leaflet-container a.leaflet-popup-close-button { color: var(--muted); }
+        
     </style>
 </head>
 <body>
 
     <div id="sidebar">
-        <h2>🏰 Scanner 327</h2>
-        <div id="status" class="stats-box">Caricamento database...</div>
+        <h2>Scanner 327</h2>
         
-        <div class="search-group">
-            <label>Cerca Giocatore:</label>
-            <input type="text" id="searchName" placeholder="Es. Re Panza..." onkeyup="eseguiRicerca()">
+        <div id="status" class="stats-box">
+            In attesa del database...
         </div>
         
         <div class="search-group">
-            <label>Cerca Alleanza (ID):</label>
-            <input type="number" id="searchAlly" placeholder="Es. 123..." onkeyup="eseguiRicerca()">
+            <label>Cerca Giocatore</label>
+            <input type="text" id="searchName" placeholder="Nome..." autocomplete="off" onkeyup="eseguiRicerca()">
+        </div>
+        
+        <div class="search-group">
+            <label>Cerca Alleanza (ID)</label>
+            <input type="number" id="searchAlly" placeholder="ID..." autocomplete="off" onkeyup="eseguiRicerca()">
         </div>
 
         <div id="results-container"></div>
@@ -84,43 +201,50 @@
     <script>
         const DATA_FILE = "database_mondo_327.json";
 
-        // --- INIZIALIZZAZIONE MAPPA ---
+        // Mappa scura
         const map = L.map('map', {
             crs: L.CRS.Simple,
             minZoom: -2,
             maxZoom: 2,
-            zoomSnap: 0.5
+            zoomSnap: 0.5,
+            zoomControl: false // Lo spostiamo o personalizziamo se serve
         }).setView([500, 500], -1);
+        
+        L.control.zoom({ position: 'topright' }).addTo(map);
 
+        // Confini grigi scuri
         const bounds = [[0,0], [1000,1000]];
-        L.rectangle(bounds, {color: "#bdc3c7", weight: 1, fill: false}).addTo(map);
+        L.rectangle(bounds, {color: "#334155", weight: 1, fill: false}).addTo(map);
         map.fitBounds(bounds);
 
+        // Renderer ottimizzato
         const canvasRenderer = L.canvas({ padding: 0.5 });
         
         let allCastles = []; 
         let markersGroup = L.layerGroup().addTo(map);
 
-        // --- CARICAMENTO DATI ---
+        // --- CARICAMENTO ---
         fetch(DATA_FILE)
             .then(response => {
                 if (!response.ok) throw new Error("Database non trovato.");
                 return response.json();
             })
             .then(data => {
-                // FILTRO: Solo castelli giocatori (>0)
+                // Filtro: solo giocatori reali
                 allCastles = data.filter(c => c.p && c.p > 0);
                 
                 document.getElementById('status').innerHTML = `
-                    ✅ <b>Database Caricato</b><br>
-                    Castelli Giocatori: ${allCastles.length}<br>
-                    Data: ${new Date().toLocaleDateString()}
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>Castelli:</span> <span style="color:var(--accent)">${allCastles.length}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-top:5px">
+                        <span>Ultimo agg:</span> <span>${new Date().toLocaleDateString()}</span>
+                    </div>
                 `;
                 disegnaMappa(allCastles);
             })
             .catch(err => {
-                console.error(err);
-                document.getElementById('status').innerHTML = `<span style="color:red">❌ Errore: ${err.message}</span>`;
+                document.getElementById('status').innerHTML = `<span style="color:var(--danger)">Errore: ${err.message}</span>`;
             });
 
         // --- DISEGNO MAPPA ---
@@ -128,35 +252,47 @@
             markersGroup.clearLayers();
 
             dati.forEach(c => {
-                // Colore UNIFORME per tutti (Blu standard)
-                const colore = '#3388ff'; 
-                const raggio = 3;
+                // Colore Marker: Useremo l'accent blue del tema
+                // Se inattivo, usiamo il rosso danger
+                let colore = '#60a5fa'; // --accent
+                let raggio = 2;
+                
+                if (c.i === true) { 
+                    colore = '#ef4444'; // --danger
+                    raggio = 3; 
+                }
 
-                // Testo Stato
-                const statoText = c.i 
-                    ? '<span style="color:red; font-weight:bold">[INATTIVO]</span>' 
-                    : '<span style="color:green; font-weight:bold">[ATTIVO]</span>';
-
-                // Marker
                 const marker = L.circleMarker([c.y, c.x], {
                     renderer: canvasRenderer,
                     radius: raggio,
                     fillColor: colore,
-                    color: "#000",
-                    weight: 0,
-                    fillOpacity: 0.6
+                    color: "#000", // Bordo nero sottile per contrasto
+                    weight: 1,
+                    fillOpacity: 0.8
                 });
 
-                // Popup
+                // Creazione Tag HTML
+                const statusHtml = c.i 
+                    ? '<span class="status-tag tag-inactive">INATTIVO</span>' 
+                    : '<span class="status-tag tag-active">ATTIVO</span>';
+
+                // Popup in stile Dark Mode
                 const popupContent = `
-                    <div style="font-size:14px; min-width: 200px;">
-                        <b>${c.n || "Castello"}</b><br>
-                        <hr style="margin:5px 0">
-                        👤 <b>${c.pn || "Sconosciuto"}</b> ${statoText}<br>
-                        <small>(ID: ${c.p})</small><br>
-                        🛡️ Alleanza: <b>${c.a}</b><br>
-                        🏆 Punti: ${c.pt}<br>
-                        📍 Coord: <b>${c.x}:${c.y}</b>
+                    <div style="font-family:sans-serif;">
+                        <div style="font-size:1.1em; color:var(--accent); font-weight:bold; margin-bottom:5px;">
+                            ${c.n || "Castello"}
+                        </div>
+                        <div style="border-top:1px solid var(--border); padding-top:5px; font-size:0.9em;">
+                            <div style="margin-bottom:4px;">
+                                👤 <b style="color:var(--text)">${c.pn || "Sconosciuto"}</b> ${statusHtml}
+                            </div>
+                            <div style="color:var(--muted)">ID Player: ${c.p}</div>
+                            <div style="margin-top:4px;">🛡️ Alleanza: <b style="color:var(--text)">${c.a}</b></div>
+                            <div>🏆 Punti: <b style="color:var(--text)">${c.pt}</b></div>
+                            <div style="margin-top:5px; background:rgba(0,0,0,0.3); padding:4px; border-radius:4px; text-align:center;">
+                                📍 <b>${c.x}:${c.y}</b>
+                            </div>
+                        </div>
                     </div>
                 `;
                 marker.bindPopup(popupContent);
@@ -184,19 +320,21 @@
                 return false;
             });
 
+            // Mostriamo max 50 risultati
             risultati.slice(0, 50).forEach(c => {
                 const el = document.createElement('div');
                 el.className = 'result-item';
                 
-                // Testo Stato nella lista
-                const statoClass = c.i ? 'status-inactive' : 'status-active';
-                const statoLabel = c.i ? '[INATTIVO]' : '[ATTIVO]';
+                const statusClass = c.i ? 'tag-inactive' : 'tag-active';
+                const statusLabel = c.i ? 'INATTIVO' : 'ATTIVO';
 
                 el.innerHTML = `
                     <div class="res-name">
-                        ${c.pn || "Sconosciuto"} 
-                        <span class="res-status ${statoClass}">${statoLabel}</span>
+                        ${c.pn || "Sconosciuto"}
                         <span class="res-coord">${c.x}:${c.y}</span>
+                    </div>
+                    <div style="margin-top:4px;">
+                        <span class="status-tag ${statusClass}">${statusLabel}</span>
                     </div>
                     <div class="res-info">
                         ${c.n} | Ally: ${c.a} | Punti: ${c.pt}
@@ -205,14 +343,13 @@
                 
                 el.onclick = () => {
                     map.setView([c.y, c.x], 4);
-                    // Prova ad aprire popup simulando click (opzionale, richiede riferimento marker)
                 };
                 
                 container.appendChild(el);
             });
 
             if (risultati.length === 0) {
-                container.innerHTML = "<div style='padding:10px; color:#666'>Nessun risultato.</div>";
+                container.innerHTML = "<div style='padding:15px; text-align:center; color:var(--muted)'>Nessun risultato.</div>";
             }
         }
     </script>
