@@ -549,7 +549,6 @@
         }
         window.onload = () => { loadGameData(); };
 
-        // --- FUNZIONE CHECK DB (Clean) ---
         function checkDB() {
             let val = document.getElementById('inAttacker').value;
             let msg = document.getElementById('dbMsg');
@@ -570,38 +569,30 @@
                     msg.innerText = `Scarico DB Mondo ${w}...`;
                     msg.style.display = 'block';
 
-                    let urlMondo = "";
-                    let urlClassifica = "";
+                    let urlMondo = (w === "327") 
+                        ? "https://raw.githubusercontent.com/Re-Panza/lk_scanner/main/database_mondo_327.json"
+                        : `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_mondo_${w}.json`;
 
-                    if (w === "327") {
-                        urlMondo = "https://raw.githubusercontent.com/Re-Panza/lk_scanner/main/database_mondo_327.json";
-                    } else {
-                        urlMondo = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_mondo_${w}.json`;
-                        urlClassifica = `https://raw.githubusercontent.com/Re-Panza/lk_database/main/database_classificamondo${w}.json`;
-                    }
-
-                    Promise.all([
-                        fetch(urlMondo + "?v=" + Date.now()).then(r => {
+                    fetch(urlMondo + "?v=" + Date.now())
+                        .then(r => {
                             if (!r.ok) throw new Error("DB Mondo mancante");
                             return r.json();
-                        }),
-                        fetch(urlClassifica + "?v=" + Date.now()).then(r => {
-                            if (!r.ok) return [];
-                            return r.json();
                         })
-                    ])
-                        .then(([cD, nD]) => {
+                        .then(data => {
                             DB = [];
+                            PLAYER_NAMES = {};
                             const f = (n) => {
                                 if (Array.isArray(n)) n.forEach(f);
-                                else if (n && n.x) { n.p = n.p || n.pid || 0; DB.push(n); }
+                                else if (n && n.x !== undefined) { 
+                                    n.p = n.p || n.pid || 0; 
+                                    DB.push(n); 
+                                    if (n.p && (n.nick || n.player_name || n.pn)) {
+                                        PLAYER_NAMES[n.p] = n.nick || n.player_name || n.pn;
+                                    }
+                                }
                                 else if (typeof n === 'object') Object.values(n).forEach(f);
                             };
-                            f(cD);
-
-                            PLAYER_NAMES = {};
-                            if (Array.isArray(nD)) nD.forEach(p => { PLAYER_NAMES[p.id || p.p] = p.nick || p.name || p.n; });
-
+                            f(data);
                             identifyUser(parsed, msg);
                         }).catch((err) => {
                             console.error(err);
@@ -619,10 +610,11 @@
             if (parsed.type === 'player') myPID = parsed.id;
 
             if (myPID) {
-                myCastles = DB.filter(c => c.p === myPID);
+                myCastles = DB.filter(c => String(c.p) === String(myPID));
                 if (myCastles.length > 0) {
+                    let pName = PLAYER_NAMES[myPID] || myCastles[0].nick || myCastles[0].pn || "Giocatore";
                     msgElement.className = "db-status success";
-                    msgElement.innerText = `✅ Identificato: ${PLAYER_NAMES[myPID] || "Giocatore"} (${myCastles.length} castelli)`;
+                    msgElement.innerText = `✅ Identificato: ${pName} (${myCastles.length} castelli)`;
                 } else {
                     msgElement.className = "db-status error";
                     msgElement.innerText = `⚠ Nessun castello trovato per ID ${myPID}`;
@@ -670,7 +662,7 @@
                 let lk = parseLK(line);
                 if (lk && lk.x !== undefined && lk.y !== undefined) {
                     let targetObj = DB.find(c => c.x === lk.x && c.y === lk.y);
-                    let tName = targetObj ? (PLAYER_NAMES[targetObj.p] || targetObj.n || "Sconosciuto") : "Coordinate";
+                    let tName = targetObj ? (PLAYER_NAMES[targetObj.p] || targetObj.nick || targetObj.pn || "Sconosciuto") : "Coordinate";
                     let tCastleName = targetObj && targetObj.n ? targetObj.n : "Castello";
 
                     let bestSource = null;
@@ -786,4 +778,3 @@
 </body>
 
 </html>
-
