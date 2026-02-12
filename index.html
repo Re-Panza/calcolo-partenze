@@ -3,15 +3,24 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Mappa Mondo 327</title>
+    <link rel="apple-touch-icon" href="https://re-panza.github.io/lk_tool/icona.png">
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>Calcolo Partenze - L&K Tool</title>
+
+    <script src="https://re-panza.github.io/lk_tool/version.js"></script>
+    <script>
+        if (typeof APP_VERSION !== 'undefined') {
+            document.write(`<link rel="manifest" href="https://re-panza.github.io/lk_tool/manifest.json?v=${APP_VERSION}">`);
+        }
+    </script>
+    
+    <script src="common.js"></script>
 
     <style>
-        /* --- STILE PRESO DAL TUO INDEX ORIGINALE --- */
         :root {
             --bg: #0f172a;
             --card: #111c33;
@@ -21,337 +30,367 @@
             --border: rgba(255, 255, 255, 0.1);
             --danger: #ef4444;
             --success: #22c55e;
+            --warning: #f59e0b;
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg);
             color: var(--text);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Sidebar Scura */
-        #sidebar {
-            width: 320px;
-            background-color: var(--card);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-            z-index: 1001;
-            box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            padding-bottom: 80px;
         }
 
         h2 {
-            margin-top: 0;
+            text-align: center;
             color: var(--accent);
-            font-size: 1.2rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 15px;
             margin-bottom: 20px;
         }
 
-        /* Statistiche */
-        .stats-box {
-            font-size: 0.85rem;
-            color: var(--muted);
-            margin-bottom: 20px;
-            padding: 10px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
+        /* --- Input Styles --- */
+        .input-group {
+            background: var(--card);
+            padding: 15px;
+            border-radius: 12px;
             border: 1px solid var(--border);
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
         }
 
-        /* Input stilizzati come il tuo tool */
-        .search-group { margin-bottom: 15px; }
-        .search-group label {
+        label {
             display: block;
             color: var(--muted);
             margin-bottom: 8px;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 600;
         }
-        
-        input[type="text"], input[type="number"] {
+
+        input, select {
             width: 100%;
-            background: var(--bg);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
             color: var(--text);
             padding: 12px;
             border-radius: 8px;
             font-size: 1rem;
             box-sizing: border-box;
+            outline: none;
             transition: border-color 0.3s;
         }
-        
-        input:focus {
-            outline: none;
+
+        input:focus, select:focus {
             border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.1);
         }
 
-        /* Lista Risultati Scura */
-        #results-container { 
-            flex-grow: 1; 
-            overflow-y: auto; 
+        /* --- Search Results --- */
+        #searchResults {
             margin-top: 10px;
-            border-top: 1px solid var(--border);
-            padding-top: 10px;
-        }
-
-        /* Scrollbar custom */
-        #results-container::-webkit-scrollbar { width: 6px; }
-        #results-container::-webkit-scrollbar-track { background: var(--bg); }
-        #results-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-        .result-item {
-            padding: 12px;
-            margin-bottom: 8px;
-            background: rgba(255,255,255,0.03);
+            max-height: 200px;
+            overflow-y: auto;
             border: 1px solid var(--border);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .result-item:hover {
-            background: rgba(96, 165, 250, 0.1); /* Accent color low opacity */
-            border-color: var(--accent);
+            border-radius: 8px;
+            display: none;
+            background: var(--bg);
         }
 
-        .res-name { 
-            font-weight: bold; 
-            color: var(--accent); 
+        .search-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .search-item:hover {
+            background: rgba(96, 165, 250, 0.2);
+        }
+
+        .search-name { color: var(--accent); font-weight: bold; }
+        .search-coord { float: right; font-family: monospace; background: rgba(0,0,0,0.3); padding: 2px 5px; border-radius: 4px; }
+        .search-details { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+
+        /* --- Target List (Cards) --- */
+        .target-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
         }
+
+        .target-name { font-weight: bold; color: var(--text); font-size: 1.1rem; }
+        .target-coords { color: var(--accent); font-family: monospace; font-size: 1rem; }
         
-        .res-coord { 
-            font-family: monospace; 
-            color: var(--text); 
-            background: rgba(0,0,0,0.3); 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            font-size: 0.9em;
+        .remove-btn {
+            background: none; border: none; color: var(--danger); font-size: 1.2rem; cursor: pointer;
         }
 
-        .res-info { 
-            font-size: 0.8rem; 
-            color: var(--muted); 
-            margin-top: 5px; 
+        /* --- Results Box inside Card --- */
+        .result-box {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            text-align: center;
+            display: none; /* Hidden by default */
         }
+        .result-box.visible { display: block; }
+        
+        .launch-time { color: var(--success); font-weight: bold; font-size: 1.1rem; margin: 5px 0; }
+        .arrival-time { color: var(--warning); font-size: 0.9rem; }
 
-        .status-tag {
-            font-size: 0.7rem;
+        .btn-calc {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
             font-weight: bold;
-            text-transform: uppercase;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 8px;
+            width: 100%;
+            margin-top: 10px;
+            cursor: pointer;
         }
-        .tag-active { background: rgba(34, 197, 94, 0.2); color: var(--success); }
-        .tag-inactive { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
 
-        /* Mappa */
-        #map { flex-grow: 1; height: 100%; background: #0b1120; }
-        
-        /* Popup della mappa scuri */
-        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
-            background: var(--card);
-            color: var(--text);
-            box-shadow: 0 3px 14px rgba(0,0,0,0.4);
-        }
-        .leaflet-popup-content { margin: 15px; }
-        .leaflet-container a.leaflet-popup-close-button { color: var(--muted); }
-        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
+
 <body>
 
-    <div id="sidebar">
-        <h2>Scanner 327</h2>
-        
-        <div id="status" class="stats-box">
-            In attesa del database...
-        </div>
-        
-        <div class="search-group">
-            <label>Cerca Giocatore</label>
-            <input type="text" id="searchName" placeholder="Nome..." autocomplete="off" onkeyup="eseguiRicerca()">
-        </div>
-        
-        <div class="search-group">
-            <label>Cerca Alleanza (ID)</label>
-            <input type="number" id="searchAlly" placeholder="ID..." autocomplete="off" onkeyup="eseguiRicerca()">
-        </div>
+    <h2>🎯 Calcolo Partenze</h2>
 
-        <div id="results-container"></div>
+    <div class="input-group">
+        <label>📍 Le tue Coordinate (Partenza)</label>
+        <div style="display:flex; gap:10px;">
+            <input type="number" id="startX" placeholder="X" onchange="recalcAll()">
+            <input type="number" id="startY" placeholder="Y" onchange="recalcAll()">
+        </div>
     </div>
 
-    <div id="map"></div>
+    <div class="input-group">
+        <label>⏰ Data e Ora di ARRIVO (Impact)</label>
+        <div style="display:flex; gap:10px;">
+            <input type="date" id="inDate" onchange="recalcAll()">
+            <input type="time" id="inTime" step="1" onchange="recalcAll()">
+        </div>
+    </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
+    <div class="input-group">
+        <label>🔍 Cerca Bersaglio (Nome Giocatore, Castello, Alleanza)</label>
+        <input type="text" id="searchBox" placeholder="Es. Re Panza..." onkeyup="doSearch()">
+        <div id="searchResults"></div>
+    </div>
+
+    <div id="targetListArea"></div>
+
     <script>
-        const DATA_FILE = "database_mondo_327.json";
-
-        // Mappa scura
-        const map = L.map('map', {
-            crs: L.CRS.Simple,
-            minZoom: -2,
-            maxZoom: 2,
-            zoomSnap: 0.5,
-            zoomControl: false // Lo spostiamo o personalizziamo se serve
-        }).setView([500, 500], -1);
+        // --- CONFIGURAZIONE DATABASE ---
+        const DB_FILE = "database_mondo_327.json"; // File unico aggiornato
         
-        L.control.zoom({ position: 'topright' }).addTo(map);
+        // --- DATABASE INTERNO ---
+        let fullDb = [];
+        let selectedTargets = [];
 
-        // Confini grigi scuri
-        const bounds = [[0,0], [1000,1000]];
-        L.rectangle(bounds, {color: "#334155", weight: 1, fill: false}).addTo(map);
-        map.fitBounds(bounds);
+        // Velocità truppe (minuti per campo)
+        const SPEEDS = {
+            "lanceri": 2, "spadaccini": 2, "arcieri": 2, "balestrieri": 2,
+            "cavalieri": 1, "cav_pesante": 1,
+            "carro": 6, "ariete": 6, "trabucco": 6,
+            "argenteus": 4 // Velocità transito
+        };
 
-        // Renderer ottimizzato
-        const canvasRenderer = L.canvas({ padding: 0.5 });
-        
-        let allCastles = []; 
-        let markersGroup = L.layerGroup().addTo(map);
-
-        // --- CARICAMENTO ---
-        fetch(DATA_FILE)
-            .then(response => {
-                if (!response.ok) throw new Error("Database non trovato.");
-                return response.json();
-            })
-            .then(data => {
-                // Filtro: solo giocatori reali
-                allCastles = data.filter(c => c.p && c.p > 0);
-                
-                document.getElementById('status').innerHTML = `
-                    <div style="display:flex; justify-content:space-between;">
-                        <span>Castelli:</span> <span style="color:var(--accent)">${allCastles.length}</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; margin-top:5px">
-                        <span>Ultimo agg:</span> <span>${new Date().toLocaleDateString()}</span>
-                    </div>
-                `;
-                disegnaMappa(allCastles);
-            })
-            .catch(err => {
-                document.getElementById('status').innerHTML = `<span style="color:var(--danger)">Errore: ${err.message}</span>`;
-            });
-
-        // --- DISEGNO MAPPA ---
-        function disegnaMappa(dati) {
-            markersGroup.clearLayers();
-
-            dati.forEach(c => {
-                // Colore Marker: Useremo l'accent blue del tema
-                // Se inattivo, usiamo il rosso danger
-                let colore = '#60a5fa'; // --accent
-                let raggio = 2;
-                
-                if (c.i === true) { 
-                    colore = '#ef4444'; // --danger
-                    raggio = 3; 
-                }
-
-                const marker = L.circleMarker([c.y, c.x], {
-                    renderer: canvasRenderer,
-                    radius: raggio,
-                    fillColor: colore,
-                    color: "#000", // Bordo nero sottile per contrasto
-                    weight: 1,
-                    fillOpacity: 0.8
-                });
-
-                // Creazione Tag HTML
-                const statusHtml = c.i 
-                    ? '<span class="status-tag tag-inactive">INATTIVO</span>' 
-                    : '<span class="status-tag tag-active">ATTIVO</span>';
-
-                // Popup in stile Dark Mode
-                const popupContent = `
-                    <div style="font-family:sans-serif;">
-                        <div style="font-size:1.1em; color:var(--accent); font-weight:bold; margin-bottom:5px;">
-                            ${c.n || "Castello"}
-                        </div>
-                        <div style="border-top:1px solid var(--border); padding-top:5px; font-size:0.9em;">
-                            <div style="margin-bottom:4px;">
-                                👤 <b style="color:var(--text)">${c.pn || "Sconosciuto"}</b> ${statusHtml}
-                            </div>
-                            <div style="color:var(--muted)">ID Player: ${c.p}</div>
-                            <div style="margin-top:4px;">🛡️ Alleanza: <b style="color:var(--text)">${c.a}</b></div>
-                            <div>🏆 Punti: <b style="color:var(--text)">${c.pt}</b></div>
-                            <div style="margin-top:5px; background:rgba(0,0,0,0.3); padding:4px; border-radius:4px; text-align:center;">
-                                📍 <b>${c.x}:${c.y}</b>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                marker.bindPopup(popupContent);
-                marker.addTo(markersGroup);
-            });
-        }
-
-        // --- RICERCA ---
-        function eseguiRicerca() {
-            const txtName = document.getElementById('searchName').value.toLowerCase();
-            const txtAlly = document.getElementById('searchAlly').value;
-            const container = document.getElementById('results-container');
+        // --- INIZIALIZZAZIONE ---
+        document.addEventListener("DOMContentLoaded", () => {
+            // Imposta data odierna di default
+            document.getElementById('inDate').valueAsDate = new Date();
             
-            container.innerHTML = ""; 
+            // Carica il DB Unificato
+            loadDatabase();
+        });
 
-            if (txtName.length < 3 && txtAlly.length < 1) return;
+        async function loadDatabase() {
+            const searchBox = document.getElementById('searchBox');
+            searchBox.placeholder = "Caricamento database...";
+            searchBox.disabled = true;
 
-            const risultati = allCastles.filter(c => {
-                const matchName = txtName && c.pn && c.pn.toLowerCase().includes(txtName);
-                const matchAlly = txtAlly && c.a == txtAlly;
-
-                if (txtName && txtAlly) return matchName && matchAlly;
-                if (txtName) return matchName;
-                if (txtAlly) return matchAlly;
-                return false;
-            });
-
-            // Mostriamo max 50 risultati
-            risultati.slice(0, 50).forEach(c => {
-                const el = document.createElement('div');
-                el.className = 'result-item';
+            try {
+                const response = await fetch(DB_FILE);
+                if (!response.ok) throw new Error("Errore file JSON");
+                const data = await response.json();
                 
-                const statusClass = c.i ? 'tag-inactive' : 'tag-active';
-                const statusLabel = c.i ? 'INATTIVO' : 'ATTIVO';
-
-                el.innerHTML = `
-                    <div class="res-name">
-                        ${c.pn || "Sconosciuto"}
-                        <span class="res-coord">${c.x}:${c.y}</span>
-                    </div>
-                    <div style="margin-top:4px;">
-                        <span class="status-tag ${statusClass}">${statusLabel}</span>
-                    </div>
-                    <div class="res-info">
-                        ${c.n} | Ally: ${c.a} | Punti: ${c.pt}
-                    </div>
-                `;
+                // Filtro: solo castelli validi (con ID giocatore > 0)
+                fullDb = data.filter(c => c.p && c.p > 0);
                 
-                el.onclick = () => {
-                    map.setView([c.y, c.x], 4);
-                };
-                
-                container.appendChild(el);
-            });
-
-            if (risultati.length === 0) {
-                container.innerHTML = "<div style='padding:15px; text-align:center; color:var(--muted)'>Nessun risultato.</div>";
+                searchBox.placeholder = `Cerca tra ${fullDb.length} castelli...`;
+                searchBox.disabled = false;
+                console.log("Database caricato:", fullDb.length, "record.");
+            } catch (error) {
+                console.error(error);
+                searchBox.placeholder = "Errore caricamento database!";
             }
         }
+
+        // --- LOGICA DI RICERCA (Adattata al nuovo JSON) ---
+        function doSearch() {
+            const query = document.getElementById('searchBox').value.toLowerCase();
+            const resDiv = document.getElementById('searchResults');
+            resDiv.innerHTML = "";
+            
+            if (query.length < 3) {
+                resDiv.style.display = 'none';
+                return;
+            }
+
+            // Cerca per: Nome Giocatore (pn), Nome Castello (n), Alleanza (a)
+            const results = fullDb.filter(c => {
+                const matchPn = c.pn && c.pn.toLowerCase().includes(query);
+                const matchN = c.n && c.n.toLowerCase().includes(query);
+                const matchA = c.a && c.a.toString().includes(query);
+                return matchPn || matchN || matchA;
+            }).slice(0, 10); // Max 10 risultati
+
+            if (results.length > 0) {
+                resDiv.style.display = 'block';
+                results.forEach(c => {
+                    const div = document.createElement('div');
+                    div.className = 'search-item';
+                    div.innerHTML = `
+                        <span class="search-name">${c.pn || "Sconosciuto"}</span> 
+                        <span class="search-coord">${c.x}:${c.y}</span>
+                        <div class="search-details">🏰 ${c.n} | 🛡️ Ally: ${c.a}</div>
+                    `;
+                    div.onclick = () => addTarget(c);
+                    resDiv.appendChild(div);
+                });
+            } else {
+                resDiv.style.display = 'none';
+            }
+        }
+
+        // --- GESTIONE TARGET ---
+        function addTarget(castle) {
+            // Pulisci ricerca
+            document.getElementById('searchBox').value = "";
+            document.getElementById('searchResults').style.display = 'none';
+
+            // Aggiungi a lista
+            const id = Date.now(); // ID univoco per il DOM
+            selectedTargets.push({ id: id, data: castle });
+            
+            renderTarget(id, castle);
+        }
+
+        function removeTarget(id) {
+            selectedTargets = selectedTargets.filter(t => t.id !== id);
+            document.getElementById(`card_${id}`).remove();
+        }
+
+        function renderTarget(id, c) {
+            const container = document.getElementById('targetListArea');
+            const div = document.createElement('div');
+            div.className = 'target-card';
+            div.id = `card_${id}`;
+            
+            div.innerHTML = `
+                <div class="card-header">
+                    <div>
+                        <div class="target-name">${c.pn} - ${c.n}</div>
+                        <div class="target-coords">Coord: ${c.x}:${c.y}</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeTarget(${id})">&times;</button>
+                </div>
+                
+                <label>Velocità Truppa più lenta:</label>
+                <select id="sel_${id}" onchange="calcOne(${id})">
+                    <option value="" disabled selected>Seleziona truppa...</option>
+                    <option value="6">Carro / Ariete / Trabucco (6 min)</option>
+                    <option value="4">Argenteus (4 min)</option>
+                    <option value="2">Fanteria / Arcieri (2 min)</option>
+                    <option value="1">Cavalleria (1 min)</option>
+                </select>
+
+                <div id="res_${id}" class="result-box"></div>
+            `;
+            
+            // Inserisci in cima
+            container.prepend(div);
+            // Prova a calcolare subito se ci sono le coord di partenza
+            calcOne(id);
+        }
+
+        // --- LOGICA DI CALCOLO ---
+        function getDistance(x1, y1, x2, y2) {
+            return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        }
+
+        function pad(n) { return n < 10 ? '0' + n : n; }
+
+        function calcOne(id) {
+            const startX = parseInt(document.getElementById('startX').value);
+            const startY = parseInt(document.getElementById('startY').value);
+            const dateVal = document.getElementById('inDate').value;
+            const timeVal = document.getElementById('inTime').value;
+            const speed = parseInt(document.getElementById(`sel_${id}`).value);
+
+            const resBox = document.getElementById(`res_${id}`);
+            
+            // Validazione base
+            if (!startX || !startY || !dateVal || !timeVal || !speed) {
+                resBox.classList.remove('visible');
+                return;
+            }
+
+            // Trova dati target
+            const targetObj = selectedTargets.find(t => t.id === id);
+            if (!targetObj) return;
+            const tx = targetObj.data.x;
+            const ty = targetObj.data.y;
+
+            // 1. Calcolo Distanza
+            const dist = getDistance(startX, startY, tx, ty);
+            
+            // 2. Calcolo Tempo Viaggio (minuti) = Distanza * Velocità
+            const travelMinutes = dist * speed;
+            const travelMs = travelMinutes * 60 * 1000;
+
+            // 3. Data Arrivo (Impact)
+            const impactDate = new Date(`${dateVal}T${timeVal}`);
+            
+            // 4. Data Partenza = Arrivo - Viaggio
+            const launchDate = new Date(impactDate.getTime() - travelMs);
+
+            // Formattazione
+            const fmtDate = (d) => `${pad(d.getDate())}/${pad(d.getMonth()+1)} ore ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+
+            resBox.innerHTML = `
+                <div>Distanza: <b>${dist.toFixed(2)}</b> campi</div>
+                <div>Viaggio: <b>${Math.floor(travelMinutes)}m ${Math.round((travelMinutes%1)*60)}s</b></div>
+                <hr style="border-color:rgba(255,255,255,0.1)">
+                <div style="font-size:0.9rem; color:#aaa">DEVI PARTIRE IL:</div>
+                <div class="launch-time">${fmtDate(launchDate)}</div>
+                <div class="arrival-time">per arrivare alle ${timeVal}</div>
+            `;
+            resBox.classList.add('visible');
+        }
+
+        function recalcAll() {
+            selectedTargets.forEach(t => calcOne(t.id));
+        }
+
     </script>
 </body>
 </html>
