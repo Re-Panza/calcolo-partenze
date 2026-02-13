@@ -325,21 +325,6 @@
             border-bottom: 1px dotted rgba(255, 255, 255, 0.3);
         }
 
-        .launch-btn {
-            display: block;
-            width: 100%;
-            text-align: center;
-            background: var(--gold);
-            color: #000;
-            text-decoration: none;
-            padding: 14px;
-            border-radius: 12px;
-            font-weight: 800;
-            margin-top: 16px;
-            text-transform: uppercase;
-            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
-        }
-
         .paypal-footer {
             text-align: center;
             margin-top: 40px;
@@ -889,6 +874,16 @@
             let depTimeExact = new Date(impactTime - (travelSec * 1000));
             let depTimeSafe = new Date(impactTime - (travelSecSafe * 1000));
 
+            // Formattazione stringa tempo di percorrenza
+            let ore = Math.floor(travelSec / 3600);
+            let minuti = Math.floor((travelSec % 3600) / 60);
+            let secondi = Math.floor(travelSec % 60);
+            
+            let travelTimeStr = "";
+            if (ore > 0) travelTimeStr += `${ore} ore `;
+            if (minuti > 0 || ore > 0) travelTimeStr += `${minuti} min `;
+            travelTimeStr += `${secondi} sec`;
+
             // Colora di rosso il rettangolo se il calcolo finale porta le truppe a partire nel passato (ritardo palese)
             if (depTimeSafe.getTime() < now) {
                 resBox.style.borderColor = 'var(--danger)';
@@ -899,7 +894,13 @@
             }
 
             const fmt = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} del ${pad(d.getDate())}/${pad(d.getMonth() + 1)}`;
-            resBox.innerHTML = `<div class="launch-window-simple">Parti tra <br><b>${fmt(depTimeSafe)}</b><br> e <br><b>${fmt(depTimeExact)}</b></div><a href="l+k://coordinates?${finalSource.source.x},${finalSource.source.y}&${worldId}" class="launch-btn">VAI AL TARGET</a>`;
+            
+            resBox.innerHTML = `
+                <div style="font-size:13px; color:var(--accent); margin-bottom:8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+                    ⏱️ Tempo in viaggio: <b>${travelTimeStr}</b>
+                </div>
+                <div class="launch-window-simple">Parti tra <br><b>${fmt(depTimeSafe)}</b><br> e <br><b>${fmt(depTimeExact)}</b></div>
+            `;
             resBox.classList.add('visible');
         }
     </script>
