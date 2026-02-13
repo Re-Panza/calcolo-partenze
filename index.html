@@ -628,7 +628,6 @@
             }
         }
 
-        // Funzione per generare i bonus specifici, passiamo "false" al calculateRow in modo che non cambi castello quando vengono cliccati
         function getBonusHtml(habType, i) {
             let lvlOpts = ""; for (let j = 1; j <= 30; j++) lvlOpts += `<option value="${j}">Lv ${j}</option>`;
             if (habType === 'castello') {
@@ -709,7 +708,6 @@
                         });
                     });
 
-                    // Si ordina sempre dal più distante al più vicino
                     allCastles.sort((a, b) => b.dist - a.dist);
 
                     if (allCastles.length > 0) {
@@ -718,7 +716,7 @@
                             name: tName,
                             castleName: tCastleName,
                             allSources: allCastles,
-                            currentSourceIndex: -1 // -1 indica "nessun castello ancora assegnato"
+                            currentSourceIndex: -1
                         });
                     }
                 }
@@ -756,7 +754,6 @@
                 div.className = "target-card";
                 let targetLinkStr = `l+k://coordinates?${t.coords.x},${t.coords.y}&${worldId}`;
 
-                // All'inizio il blocco con i dettagli sorgente è INVISIBILE
                 div.innerHTML = `
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <div><div class="t-name">${t.name}</div><div class="t-castle">${t.castleName}</div><a href="${targetLinkStr}" class="t-link-coord">${targetLinkStr}</a></div>
@@ -767,7 +764,7 @@
                         <select id="selTroop_${i}" onchange="calculateRow(${i}, true)" style="margin-bottom:10px;">${troopOpts}</select>
                         
                         <div id="sourceDetails_${i}" style="display:none;">
-                            <div class="source-info-box">
+                            <div class="source-info-box" id="infoBox_${i}">
                                 <div class="hab-icon" id="srcIcon_${i}"></div>
                                 <div style="flex:1">
                                     <div class="source-label" id="srcLabel_${i}"></div>
@@ -776,7 +773,7 @@
                                     <a href="#" id="srcLink_${i}" style="font-size:11px; color:var(--accent); text-decoration:none;"></a>
                                 </div>
                             </div>
-                            <div class="config-section">
+                            <div class="config-section" id="configBox_${i}">
                                 <div style="margin-bottom:8px;">
                                     <label style="margin-top:0">Bonus Paese (Sentieri)</label>
                                     <select id="selCountryBonus_${i}" onchange="calculateRow(${i}, false)">${countryOpts}</select>
@@ -798,14 +795,14 @@
             else { content.style.display = "block"; header.querySelector('div:last-child').style.transform = 'rotate(180deg)'; content.classList.add('open'); }
         }
 
-        // Il parametro isTroopChange indica se stiamo ricalcolando perché è cambiata la truppa (TRUE) o perché stiamo solo applicando i bonus (FALSE)
         function calculateRow(idx, isTroopChange = false) {
             let troopSelect = document.getElementById(`selTroop_${idx}`);
             let troopKey = troopSelect.value;
             let detailsBox = document.getElementById(`sourceDetails_${idx}`);
             let resBox = document.getElementById(`resBox_${idx}`);
+            let infoBox = document.getElementById(`infoBox_${idx}`);
+            let configBox = document.getElementById(`configBox_${idx}`);
             
-            // Se svuoto la truppa, nascondo tutto
             if (!troopKey) { 
                 detailsBox.style.display = 'none'; 
                 return; 
@@ -817,11 +814,10 @@
             let impactTime = new Date(dVal + "T" + tVal).getTime();
             let now = Date.now();
 
-            // 1. RICERCA DEL CASTELLO MIGLIORE (Solo quando scelgo/cambio truppa o al primissimo calcolo)
+            // 1. RICERCA DEL CASTELLO MIGLIORE SU TUTTI I DISPONIBILI
             if (isTroopChange || targetData.currentSourceIndex === -1) {
                 let winnerIdx = -1;
                 
-                // Cerca il castello più lontano calcolando la velocità BASE senza contare i bonus personalizzati dell'utente
                 for (let k = 0; k < targetData.allSources.length; k++) {
                     let candidate = targetData.allSources[k];
                     let baseFactor = GAME_DATA ? GAME_DATA.habitats[candidate.habType].base_multiplier : 1.0;
@@ -840,12 +836,33 @@
                     }
                 }
 
-                if (winnerIdx === -1) winnerIdx = targetData.allSources.length - 1; // Fallback al più vicino se nulla arriva in tempo
+                if (winnerIdx === -1) {
+                    // SE NESSUN CASTELLO ARRIVA IN TEMPO
+                    detailsBox.style.display = 'block';
+                    if(infoBox) infoBox.style.display = 'none';
+                    if(configBox) configBox.style.display = 'none';
+
+                    resBox.style.borderColor = 'var(--danger)';
+                    resBox.style.background = 'rgba(239, 68, 68, 0.1)';
+                    resBox.innerHTML = `
+                        <div style="font-size:14px; color:var(--danger); font-weight:bold; margin-bottom:5px;">
+                            ⚠️ Troppo tardi!
+                        </div>
+                        <div style="font-size:13px; color:#ddd; line-height:1.4;">
+                            Non ci arrivi più a quell'orario con questa truppa da <b>nessun</b> castello.<br>Scegli una truppa più veloce.
+                        </div>`;
+                    resBox.classList.add('visible');
+                    targetData.currentSourceIndex = -1; // Reset 
+                    return; // Fermo l'esecuzione qui
+                }
+
+                // RIPRISTINA L'INTERFACCIA SE HA TROVATO UN CASTELLO
+                if(infoBox) infoBox.style.display = 'flex';
+                if(configBox) configBox.style.display = 'block';
 
                 targetData.currentSourceIndex = winnerIdx;
                 let newSource = targetData.allSources[winnerIdx];
                 
-                // Riempimento e comparsa interfaccia grafica
                 document.getElementById(`srcIcon_${idx}`).innerText = newSource.habIcon;
                 document.getElementById(`srcLabel_${idx}`).innerText = `Parti da: ${newSource.habLabel}`;
                 document.getElementById(`srcName_${idx}`).innerText = newSource.sourceName;
@@ -856,16 +873,16 @@
                 lnkEl.href = sourceLink;
                 lnkEl.innerText = sourceLink;
 
-                // Resetta il Country Bonus per pulizia
                 document.getElementById(`selCountryBonus_${idx}`).value = "1";
-
-                // Inietta l'html corretto del bonus in base al castello trovato
                 document.getElementById(`bonusAreaContainer_${idx}`).innerHTML = getBonusHtml(newSource.habType, idx);
 
                 detailsBox.style.display = 'block';
             }
 
-            // 2. CALCOLO E AGGIORNAMENTO TEMPI IN BASE AI BONUS (Sempre in esecuzione e riferito al castello già mostrato a video)
+            // Evita errori se si è modificato un bonus su un castello inesistente (controllo di sicurezza)
+            if (targetData.currentSourceIndex === -1) return;
+
+            // 2. CALCOLO E AGGIORNAMENTO TEMPI IN BASE AI BONUS
             let finalSource = targetData.allSources[targetData.currentSourceIndex];
             let finalSpeed = getSpeedForCandidate(idx, finalSource.habType, troopKey);
             let travelSec = finalSource.dist * finalSpeed;
@@ -874,7 +891,6 @@
             let depTimeExact = new Date(impactTime - (travelSec * 1000));
             let depTimeSafe = new Date(impactTime - (travelSecSafe * 1000));
 
-            // Formattazione stringa tempo di percorrenza
             let ore = Math.floor(travelSec / 3600);
             let minuti = Math.floor((travelSec % 3600) / 60);
             let secondi = Math.floor(travelSec % 60);
@@ -884,7 +900,6 @@
             if (minuti > 0 || ore > 0) travelTimeStr += `${minuti} min `;
             travelTimeStr += `${secondi} sec`;
 
-            // Colora di rosso il rettangolo se il calcolo finale porta le truppe a partire nel passato (ritardo palese)
             if (depTimeSafe.getTime() < now) {
                 resBox.style.borderColor = 'var(--danger)';
                 resBox.style.background = 'rgba(239, 68, 68, 0.1)';
