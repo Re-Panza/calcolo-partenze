@@ -643,49 +643,43 @@
             }
         }
 
+        // Funzione per generare i bonus specifici, passiamo "false" al calculateRow in modo che non cambi castello quando vengono cliccati
         function getBonusHtml(habType, i) {
             let lvlOpts = ""; for (let j = 1; j <= 30; j++) lvlOpts += `<option value="${j}">Lv ${j}</option>`;
             if (habType === 'castello') {
-                return `<div class="bonus-area active"><label class="chk-label"><input type="checkbox" id="chkMap_${i}" onchange="calculateRow(${i})"> Mappa Area (+5%)</label><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventCastello_${i}" onchange="calculateRow(${i})"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
+                return `<div class="bonus-area active"><label class="chk-label"><input type="checkbox" id="chkMap_${i}" onchange="calculateRow(${i}, false)"> Mappa Area (+5%)</label><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventCastello_${i}" onchange="calculateRow(${i}, false)"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
             } else if (habType === 'fortezza') {
-                return `<div class="bonus-area active"><label class="chk-label"><input type="checkbox" id="chkBussola_${i}" onchange="calculateRow(${i})"> Bussola (+5%)</label><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventFortezza_${i}" onchange="calculateRow(${i})"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
+                return `<div class="bonus-area active"><label class="chk-label"><input type="checkbox" id="chkBussola_${i}" onchange="calculateRow(${i}, false)"> Bussola (+5%)</label><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventFortezza_${i}" onchange="calculateRow(${i}, false)"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
             } else if (habType === 'citta') {
-                return `<div class="bonus-area active"><div style="margin-bottom:8px"><label style="margin-top:0">Livello Caserma</label><select id="selCityLvl_${i}" onchange="calculateRow(${i})">${lvlOpts}</select></div><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventCitta_${i}" onchange="calculateRow(${i})"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
+                return `<div class="bonus-area active"><div style="margin-bottom:8px"><label style="margin-top:0">Livello Caserma</label><select id="selCityLvl_${i}" onchange="calculateRow(${i}, false)">${lvlOpts}</select></div><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventCitta_${i}" onchange="calculateRow(${i}, false)"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
             } else if (habType === 'metro') {
-                return `<div class="bonus-area active"><div style="margin-bottom:8px"><label style="margin-top:0">Livello Accademia</label><select id="selMetroLvl_${i}" onchange="calculateRow(${i})">${lvlOpts}</select></div><label class="chk-label"><input type="checkbox" id="chkManovra_${i}" onchange="calculateRow(${i})"> Manovra Fianco (+10%)</label><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventMetro_${i}" onchange="calculateRow(${i})"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
+                return `<div class="bonus-area active"><div style="margin-bottom:8px"><label style="margin-top:0">Livello Accademia</label><select id="selMetroLvl_${i}" onchange="calculateRow(${i}, false)">${lvlOpts}</select></div><label class="chk-label"><input type="checkbox" id="chkManovra_${i}" onchange="calculateRow(${i}, false)"> Manovra Fianco (+10%)</label><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventMetro_${i}" onchange="calculateRow(${i}, false)"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
             }
             return "";
         }
 
-        // Calcola la velocità basandosi sempre e solo sui valori della UI attualmente mostrati a schermo
         function getSpeedForCandidate(idx, candidateHabType, troopKey) {
             if (!GAME_DATA) return 0;
             let base = GAME_DATA.troops_base_seconds[troopKey];
             let habConfig = GAME_DATA.habitats[candidateHabType];
             let factor = habConfig.base_multiplier;
 
-            let currentRenderedHab = targetsList[idx].allSources[targetsList[idx].currentSourceIndex].habType;
-            if (candidateHabType === currentRenderedHab) {
-                if (candidateHabType === 'castello') {
-                    if (document.getElementById(`chkMap_${idx}`)?.checked) factor = 0.95;
-                    if (document.getElementById(`selEventCastello_${idx}`)?.value === "100") factor *= 0.5;
-                } else if (candidateHabType === 'fortezza') {
-                    if (document.getElementById(`chkBussola_${idx}`)?.checked) factor *= 0.95;
-                    if (document.getElementById(`selEventFortezza_${idx}`)?.value === "100") factor *= 0.5;
-                } else if (candidateHabType === 'citta') {
-                    let lvl = parseInt(document.getElementById(`selCityLvl_${idx}`)?.value || "1");
-                    factor *= habConfig.building_levels[lvl] || 1.0;
-                    if (document.getElementById(`selEventCitta_${idx}`)?.value === "100") factor *= 0.5;
-                } else if (candidateHabType === 'metro') {
-                    let lvl = parseInt(document.getElementById(`selMetroLvl_${idx}`)?.value || "1");
-                    factor *= habConfig.building_levels[lvl] || 1.0;
-                    if (document.getElementById(`chkManovra_${idx}`)?.checked) factor *= 0.90;
-                    if (document.getElementById(`selEventMetro_${idx}`)?.value === "100") factor *= 0.5;
-                }
-            } else {
-                if (candidateHabType === 'citta' || candidateHabType === 'metro') {
-                    factor *= habConfig.building_levels[1] || 1.0;
-                }
+            // Legge i bonus specifici SOLO dall'interfaccia attualmente sbloccata
+            if (candidateHabType === 'castello') {
+                if (document.getElementById(`chkMap_${idx}`)?.checked) factor = 0.95;
+                if (document.getElementById(`selEventCastello_${idx}`)?.value === "100") factor *= 0.5;
+            } else if (candidateHabType === 'fortezza') {
+                if (document.getElementById(`chkBussola_${idx}`)?.checked) factor *= 0.95;
+                if (document.getElementById(`selEventFortezza_${idx}`)?.value === "100") factor *= 0.5;
+            } else if (candidateHabType === 'citta') {
+                let lvl = parseInt(document.getElementById(`selCityLvl_${idx}`)?.value || "1");
+                factor *= habConfig.building_levels[lvl] || 1.0;
+                if (document.getElementById(`selEventCitta_${idx}`)?.value === "100") factor *= 0.5;
+            } else if (candidateHabType === 'metro') {
+                let lvl = parseInt(document.getElementById(`selMetroLvl_${idx}`)?.value || "1");
+                factor *= habConfig.building_levels[lvl] || 1.0;
+                if (document.getElementById(`chkManovra_${idx}`)?.checked) factor *= 0.90;
+                if (document.getElementById(`selEventMetro_${idx}`)?.value === "100") factor *= 0.5;
             }
             
             let countryBonus = parseFloat(document.getElementById(`selCountryBonus_${idx}`)?.value) || 1.0;
@@ -730,6 +724,7 @@
                         });
                     });
 
+                    // Si ordina sempre dal più distante al più vicino
                     allCastles.sort((a, b) => b.dist - a.dist);
 
                     if (allCastles.length > 0) {
@@ -738,7 +733,7 @@
                             name: tName,
                             castleName: tCastleName,
                             allSources: allCastles,
-                            currentSourceIndex: 0 
+                            currentSourceIndex: -1 // -1 indica "nessun castello ancora assegnato"
                         });
                     }
                 }
@@ -775,32 +770,36 @@
                 let div = document.createElement('div');
                 div.className = "target-card";
                 let targetLinkStr = `l+k://coordinates?${t.coords.x},${t.coords.y}&${worldId}`;
-                
-                let initSource = t.allSources[0];
-                let sourceLink = `l+k://coordinates?${initSource.source.x},${initSource.source.y}&${worldId}`;
-                let bonusHtml = getBonusHtml(initSource.habType, i);
 
+                // All'inizio il blocco con i dettagli sorgente è INVISIBILE
                 div.innerHTML = `
                     <div class="accordion-header" onclick="toggleAccordion(this)">
                         <div><div class="t-name">${t.name}</div><div class="t-castle">${t.castleName}</div><a href="${targetLinkStr}" class="t-link-coord">${targetLinkStr}</a></div>
                         <div style="text-align:right; font-size:20px; color:var(--muted)">▼</div>
                     </div>
                     <div class="accordion-content">
-                        <div class="source-info-box">
-                            <div class="hab-icon" id="srcIcon_${i}">${initSource.habIcon}</div>
-                            <div style="flex:1">
-                                <div class="source-label" id="srcLabel_${i}">Parti da: ${initSource.habLabel}</div>
-                                <div class="source-name" id="srcName_${i}">${initSource.sourceName}</div>
-                                <div class="source-coords" id="srcCoords_${i}">${initSource.source.x},${initSource.source.y}</div>
-                                <a href="${sourceLink}" id="srcLink_${i}" style="font-size:11px; color:var(--accent); text-decoration:none;">${sourceLink}</a>
+                        <label style="color:var(--accent); margin-top:0;">1️⃣ Seleziona Truppa per trovare il Castello</label>
+                        <select id="selTroop_${i}" onchange="calculateRow(${i}, true)" style="margin-bottom:10px;">${troopOpts}</select>
+                        
+                        <div id="sourceDetails_${i}" style="display:none;">
+                            <div class="source-info-box">
+                                <div class="hab-icon" id="srcIcon_${i}"></div>
+                                <div style="flex:1">
+                                    <div class="source-label" id="srcLabel_${i}"></div>
+                                    <div class="source-name" id="srcName_${i}"></div>
+                                    <div class="source-coords" id="srcCoords_${i}"></div>
+                                    <a href="#" id="srcLink_${i}" style="font-size:11px; color:var(--accent); text-decoration:none;"></a>
+                                </div>
                             </div>
+                            <div class="config-section">
+                                <div style="margin-bottom:8px;">
+                                    <label style="margin-top:0">Bonus Paese (Sentieri)</label>
+                                    <select id="selCountryBonus_${i}" onchange="calculateRow(${i}, false)">${countryOpts}</select>
+                                </div>
+                                <div id="bonusAreaContainer_${i}"></div>
+                            </div>
+                            <div id="resBox_${i}" class="result-box"></div>
                         </div>
-                        <label>Configura Truppa</label><select id="selTroop_${i}" onchange="calculateRow(${i})" style="margin-bottom:10px;">${troopOpts}</select>
-                        <div class="config-section">
-                            <div style="margin-bottom:8px;"><label style="margin-top:0">Bonus Paese (Sentieri)</label><select id="selCountryBonus_${i}" onchange="calculateRow(${i})">${countryOpts}</select></div>
-                            <div id="bonusAreaContainer_${i}">${bonusHtml}</div>
-                        </div>
-                        <div id="resBox_${i}" class="result-box"></div>
                     </div>
                 `;
                 container.appendChild(div);
@@ -814,21 +813,18 @@
             else { content.style.display = "block"; header.querySelector('div:last-child').style.transform = 'rotate(180deg)'; content.classList.add('open'); }
         }
 
-        function calculateRow(idx) {
+        // Il parametro isTroopChange indica se stiamo ricalcolando perché è cambiata la truppa (TRUE) o perché stiamo solo applicando i bonus (FALSE)
+        function calculateRow(idx, isTroopChange = false) {
             let troopSelect = document.getElementById(`selTroop_${idx}`);
             let troopKey = troopSelect.value;
+            let detailsBox = document.getElementById(`sourceDetails_${idx}`);
             let resBox = document.getElementById(`resBox_${idx}`);
             
-            // Se non c'è truppa, nascondiamo il box SOLO se non c'è un avviso di warning attivo
+            // Se svuoto la truppa, nascondo tutto
             if (!troopKey) { 
-                if (!resBox.classList.contains('warning-mode')) {
-                    resBox.classList.remove('visible'); 
-                }
+                detailsBox.style.display = 'none'; 
                 return; 
             }
-
-            // A questo punto abbiamo una truppa: puliamo lo stato di warning
-            resBox.classList.remove('warning-mode');
 
             let targetData = targetsList[idx];
             let dVal = document.getElementById('inDate').value;
@@ -836,44 +832,35 @@
             let impactTime = new Date(dVal + "T" + tVal).getTime();
             let now = Date.now();
 
-            let currentHabType = targetData.allSources[targetData.currentSourceIndex].habType;
-            let winnerIdx = -1;
-            let requiresNewInput = false;
-
-            // Cicliamo dal castello attualmente mostrato verso quelli più vicini
-            for (let k = targetData.currentSourceIndex; k < targetData.allSources.length; k++) {
-                let candidate = targetData.allSources[k];
+            // 1. RICERCA DEL CASTELLO MIGLIORE (Solo quando scelgo/cambio truppa o al primissimo calcolo)
+            if (isTroopChange || targetData.currentSourceIndex === -1) {
+                let winnerIdx = -1;
                 
-                // 🛑 STOP: Se cambia l'habitat, dobbiamo far inserire all'utente i bonus prima di calcolare
-                if (candidate.habType !== currentHabType) {
-                    winnerIdx = k;
-                    requiresNewInput = true;
-                    break;
+                // Cerca il castello più lontano calcolando la velocità BASE senza contare i bonus personalizzati dell'utente
+                for (let k = 0; k < targetData.allSources.length; k++) {
+                    let candidate = targetData.allSources[k];
+                    let baseFactor = GAME_DATA ? GAME_DATA.habitats[candidate.habType].base_multiplier : 1.0;
+                    
+                    if (candidate.habType === 'citta' || candidate.habType === 'metro') {
+                        baseFactor *= GAME_DATA.habitats[candidate.habType].building_levels[1] || 1.0;
+                    }
+                    
+                    let speed = GAME_DATA.troops_base_seconds[troopKey] * baseFactor;
+                    let travelSecSafe = candidate.dist * speed * 1.05;
+                    let depTimeSafe = impactTime - (travelSecSafe * 1000);
+                    
+                    if (depTimeSafe >= now) {
+                        winnerIdx = k;
+                        break;
+                    }
                 }
 
-                // Stesso habitat a video: possiamo calcolare subito usando i bonus della UI
-                let speed = getSpeedForCandidate(idx, candidate.habType, troopKey);
-                let travelSecSafe = candidate.dist * speed * 1.05;
-                let depTimeSafe = impactTime - (travelSecSafe * 1000);
-                
-                if (depTimeSafe >= now) {
-                    winnerIdx = k;
-                    break;
-                }
-            }
+                if (winnerIdx === -1) winnerIdx = targetData.allSources.length - 1; // Fallback al più vicino se nulla arriva in tempo
 
-            // Se siamo arrivati all'ultimo e nessuno arriva in tempo
-            if (winnerIdx === -1) {
-                winnerIdx = targetData.allSources.length - 1;
-                requiresNewInput = (targetData.allSources[winnerIdx].habType !== currentHabType);
-            }
-
-            // Aggiornamento grafico se abbiamo saltato a un nuovo castello
-            if (winnerIdx !== targetData.currentSourceIndex) {
-                let oldSource = targetData.allSources[targetData.currentSourceIndex];
-                let newSource = targetData.allSources[winnerIdx];
                 targetData.currentSourceIndex = winnerIdx;
+                let newSource = targetData.allSources[winnerIdx];
                 
+                // Riempimento e comparsa interfaccia grafica
                 document.getElementById(`srcIcon_${idx}`).innerText = newSource.habIcon;
                 document.getElementById(`srcLabel_${idx}`).innerText = `Parti da: ${newSource.habLabel}`;
                 document.getElementById(`srcName_${idx}`).innerText = newSource.sourceName;
@@ -884,32 +871,16 @@
                 lnkEl.href = sourceLink;
                 lnkEl.innerText = sourceLink;
 
-                // Iniettiamo i nuovi campi bonus SOLO se è effettivamente cambiato l'habitat
-                if (oldSource.habType !== newSource.habType) {
-                    document.getElementById(`bonusAreaContainer_${idx}`).innerHTML = getBonusHtml(newSource.habType, idx);
-                }
+                // Resetta il Country Bonus per pulizia
+                document.getElementById(`selCountryBonus_${idx}`).value = "1";
+
+                // Inietta l'html corretto del bonus in base al castello trovato
+                document.getElementById(`bonusAreaContainer_${idx}`).innerHTML = getBonusHtml(newSource.habType, idx);
+
+                detailsBox.style.display = 'block';
             }
 
-            // GESTIONE INPUT NECESSARIO (Riquadro giallo)
-            if (requiresNewInput) {
-                resBox.style.borderColor = 'var(--gold)';
-                resBox.style.background = 'rgba(251, 191, 36, 0.1)';
-                resBox.innerHTML = `
-                    <div style="color:var(--gold); font-weight:bold; font-size:14px; margin-bottom:5px;">
-                        ⚠️ Habitat Cambiato a ${targetData.allSources[winnerIdx].habLabel}
-                    </div>
-                    <div style="font-size:13px; color:#ddd; line-height:1.4;">
-                        Imposta i nuovi bonus qui sopra, poi <b>seleziona di nuovo la truppa</b> per verificare i tempi esatti.
-                    </div>`;
-                resBox.classList.add('visible');
-                resBox.classList.add('warning-mode');
-                
-                // Svuoto la truppa così l'utente è costretto a risceglierla per sbloccare il calcolo
-                troopSelect.value = "";
-                return;
-            }
-
-            // GESTIONE CALCOLO COMPLETATO
+            // 2. CALCOLO E AGGIORNAMENTO TEMPI IN BASE AI BONUS (Sempre in esecuzione e riferito al castello già mostrato a video)
             let finalSource = targetData.allSources[targetData.currentSourceIndex];
             let finalSpeed = getSpeedForCandidate(idx, finalSource.habType, troopKey);
             let travelSec = finalSource.dist * finalSpeed;
@@ -918,6 +889,7 @@
             let depTimeExact = new Date(impactTime - (travelSec * 1000));
             let depTimeSafe = new Date(impactTime - (travelSecSafe * 1000));
 
+            // Colora di rosso il rettangolo se il calcolo finale porta le truppe a partire nel passato (ritardo palese)
             if (depTimeSafe.getTime() < now) {
                 resBox.style.borderColor = 'var(--danger)';
                 resBox.style.background = 'rgba(239, 68, 68, 0.1)';
