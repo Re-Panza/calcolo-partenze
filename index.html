@@ -554,15 +554,12 @@
             let val = document.getElementById('inAttacker').value;
             let msg = document.getElementById('dbMsg');
             
-            // Estrazione robusta: cattura solo il link ignorando eventuale testo prima/dopo
             let linkMatch = val.match(/l\+k:\/\/[^\s]+/);
             let cleanLink = linkMatch ? linkMatch[0] : val;
             
-            // Utilizzo la funzione parseLK centralizzata del common.js
             let parsed = typeof parseLK === 'function' ? parseLK(cleanLink) : null;
 
             if (parsed) {
-                // parseLK di un player restituisce {p: ..., w: ...}, quindi controlliamo 'p'
                 if (!parsed.p) {
                     msg.innerText = "⚠ Usa link 'player' per identificarti.";
                     msg.className = "db-status error";
@@ -591,13 +588,10 @@
                             DB = [];
                             PLAYER_NAMES = {};
                             
-                            // Mappatura esatta basata sulla nuova struttura del file json unico
                             if (Array.isArray(data)) {
                                 data.forEach(item => {
-                                    // Verifica campi obbligatori x e y presenti nel file
                                     if (item && typeof item.x !== 'undefined' && typeof item.y !== 'undefined') {
                                         DB.push(item);
-                                        // Mappatura player ID (chiave p) e nome player (chiave pn)
                                         if (item.p) {
                                             let pName = item.pn; 
                                             if (pName && !PLAYER_NAMES[item.p]) {
@@ -634,14 +628,11 @@
             if (isDownloading) return; 
 
             myPID = null; myCastles = [];
-            // Estrazione ID direttamente dal link parsato
             if (parsed.p) myPID = parsed.p;
 
             if (myPID) {
-                // Filtro castelli per player ID (chiave p nel file)
                 myCastles = DB.filter(c => String(c.p) === String(myPID));
                 if (myCastles.length > 0) {
-                    // Recupero nome tramite chiave pn rilevata nel database
                     let pName = PLAYER_NAMES[myPID] || myCastles[0].pn || "Giocatore";
                     msgElement.className = "db-status success";
                     msgElement.innerText = `✅ Identificato: ${pName} (${myCastles.length} castelli) - DB Pronto`;
@@ -652,28 +643,53 @@
             }
         }
 
-        function getSpeedForCard(i, troopKey) {
+        function getBonusHtml(habType, i) {
+            let lvlOpts = ""; for (let j = 1; j <= 30; j++) lvlOpts += `<option value="${j}">Lv ${j}</option>`;
+            if (habType === 'castello') {
+                return `<div class="bonus-area active"><label class="chk-label"><input type="checkbox" id="chkMap_${i}" onchange="calculateRow(${i})"> Mappa Area (+5%)</label><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventCastello_${i}" onchange="calculateRow(${i})"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
+            } else if (habType === 'fortezza') {
+                return `<div class="bonus-area active"><label class="chk-label"><input type="checkbox" id="chkBussola_${i}" onchange="calculateRow(${i})"> Bussola (+5%)</label><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventFortezza_${i}" onchange="calculateRow(${i})"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
+            } else if (habType === 'citta') {
+                return `<div class="bonus-area active"><div style="margin-bottom:8px"><label style="margin-top:0">Livello Caserma</label><select id="selCityLvl_${i}" onchange="calculateRow(${i})">${lvlOpts}</select></div><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventCitta_${i}" onchange="calculateRow(${i})"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
+            } else if (habType === 'metro') {
+                return `<div class="bonus-area active"><div style="margin-bottom:8px"><label style="margin-top:0">Livello Accademia</label><select id="selMetroLvl_${i}" onchange="calculateRow(${i})">${lvlOpts}</select></div><label class="chk-label"><input type="checkbox" id="chkManovra_${i}" onchange="calculateRow(${i})"> Manovra Fianco (+10%)</label><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventMetro_${i}" onchange="calculateRow(${i})"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
+            }
+            return "";
+        }
+
+        // Calcola la velocità basandosi sempre e solo sui valori della UI attualmente mostrati a schermo
+        function getSpeedForCandidate(idx, candidateHabType, troopKey) {
             if (!GAME_DATA) return 0;
             let base = GAME_DATA.troops_base_seconds[troopKey];
-            let hab = targetsList[i].detectedHabitat;
-            let habConfig = GAME_DATA.habitats[hab];
+            let habConfig = GAME_DATA.habitats[candidateHabType];
             let factor = habConfig.base_multiplier;
 
-            if (hab === 'castello') {
-                if (document.getElementById(`chkMap_${i}`)?.checked) factor = 0.95;
-                if (document.getElementById(`selEventCastello_${i}`)?.value === "100") factor *= 0.5;
-            } else if (hab === 'fortezza') {
-                if (document.getElementById(`chkBussola_${i}`)?.checked) factor *= 0.95;
-                if (document.getElementById(`selEventFortezza_${i}`)?.value === "100") factor *= 0.5;
-            } else if (hab === 'citta') {
-                factor *= habConfig.building_levels[parseInt(document.getElementById(`selCityLvl_${i}`).value)] || 1.0;
-                if (document.getElementById(`selEventCitta_${i}`)?.value === "100") factor *= 0.5;
-            } else if (hab === 'metro') {
-                factor *= habConfig.building_levels[parseInt(document.getElementById(`selMetroLvl_${i}`).value)] || 1.0;
-                if (document.getElementById(`chkManovra_${i}`)?.checked) factor *= 0.90;
-                if (document.getElementById(`selEventMetro_${i}`)?.value === "100") factor *= 0.5;
+            let currentRenderedHab = targetsList[idx].allSources[targetsList[idx].currentSourceIndex].habType;
+            if (candidateHabType === currentRenderedHab) {
+                if (candidateHabType === 'castello') {
+                    if (document.getElementById(`chkMap_${idx}`)?.checked) factor = 0.95;
+                    if (document.getElementById(`selEventCastello_${idx}`)?.value === "100") factor *= 0.5;
+                } else if (candidateHabType === 'fortezza') {
+                    if (document.getElementById(`chkBussola_${idx}`)?.checked) factor *= 0.95;
+                    if (document.getElementById(`selEventFortezza_${idx}`)?.value === "100") factor *= 0.5;
+                } else if (candidateHabType === 'citta') {
+                    let lvl = parseInt(document.getElementById(`selCityLvl_${idx}`)?.value || "1");
+                    factor *= habConfig.building_levels[lvl] || 1.0;
+                    if (document.getElementById(`selEventCitta_${idx}`)?.value === "100") factor *= 0.5;
+                } else if (candidateHabType === 'metro') {
+                    let lvl = parseInt(document.getElementById(`selMetroLvl_${idx}`)?.value || "1");
+                    factor *= habConfig.building_levels[lvl] || 1.0;
+                    if (document.getElementById(`chkManovra_${idx}`)?.checked) factor *= 0.90;
+                    if (document.getElementById(`selEventMetro_${idx}`)?.value === "100") factor *= 0.5;
+                }
+            } else {
+                if (candidateHabType === 'citta' || candidateHabType === 'metro') {
+                    factor *= habConfig.building_levels[1] || 1.0;
+                }
             }
-            factor *= parseFloat(document.getElementById(`selCountryBonus_${i}`).value) || 1.0;
+            
+            let countryBonus = parseFloat(document.getElementById(`selCountryBonus_${idx}`)?.value) || 1.0;
+            factor *= countryBonus;
             return base * factor;
         }
 
@@ -693,43 +709,36 @@
                 let lk = parseLK(line);
                 if (lk && typeof lk.x !== 'undefined' && typeof lk.y !== 'undefined') {
                     let targetObj = DB.find(c => c.x === lk.x && c.y === lk.y);
-                    let tName = "Sconosciuto";
-                    let tCastleName = "Castello";
-                    
-                    if (targetObj) {
-                        // Nome player (pn) e castello (n) del bersaglio
-                        tName = PLAYER_NAMES[targetObj.p] || targetObj.pn || "Giocatore";
-                        tCastleName = targetObj.n || "Castello";
-                    }
+                    let tName = targetObj ? (PLAYER_NAMES[targetObj.p] || targetObj.pn || "Giocatore") : "Sconosciuto";
+                    let tCastleName = targetObj ? (targetObj.n || "Castello") : "Castello";
 
-                    let bestSource = null;
-                    let maxDist = -1;
+                    let allCastles = [];
                     myCastles.forEach(source => {
                         let d = getDist(source.x, source.y, lk.x, lk.y);
-                        if (d > maxDist) { maxDist = d; bestSource = source; }
+                        
+                        let typeCode = source.t !== undefined ? source.t : 0;
+                        if (typeCode !== 0 && typeCode !== 2 && typeCode !== 4) typeCode = "metro";
+                        let habInfo = getHabitatInfo(typeCode);
+
+                        allCastles.push({
+                            source: source,
+                            dist: d,
+                            habType: habInfo.type,
+                            habLabel: habInfo.label,
+                            habIcon: habInfo.icon,
+                            sourceName: source.n || "Mio Castello"
+                        });
                     });
 
-                    if (bestSource) {
-                        let typeCode = bestSource.t !== undefined ? bestSource.t : 0;
-                        // Regola habitat: 0 castello, 2 fortezza, 4 città, tutto il resto metropoli
-                        if (typeCode !== 0 && typeCode !== 2 && typeCode !== 4) {
-                            typeCode = "metro";
-                        }
-                        
-                        let habInfo = getHabitatInfo(typeCode);
-                        // Nome del proprio castello sorgente (chiave n)
-                        let sName = bestSource.n || "Mio Castello";
+                    allCastles.sort((a, b) => b.dist - a.dist);
 
+                    if (allCastles.length > 0) {
                         targetsList.push({
                             coords: lk,
                             name: tName,
                             castleName: tCastleName,
-                            source: bestSource,
-                            sourceName: sName,
-                            dist: maxDist,
-                            detectedHabitat: habInfo.type,
-                            habLabel: habInfo.label,
-                            habIcon: habInfo.icon
+                            allSources: allCastles,
+                            currentSourceIndex: 0 
                         });
                     }
                 }
@@ -758,7 +767,6 @@
                 { label: "Arc. Norreno", key: "Arc. Norreno" }, { label: "Cav. Ascia / Orca", key: "Cav. Ascia" }
             ];
             let troopOpts = TROOPS_UI.map(tr => `<option value="${tr.key}">${tr.label}</option>`).join('');
-            let lvlOpts = ""; for (let j = 1; j <= 30; j++) lvlOpts += `<option value="${j}">Lv ${j}</option>`;
             const cm = [0.90, 0.89, 0.88, 0.87, 0.86, 0.85, 0.84, 0.83, 0.82, 0.81, 0.80, 0.79, 0.78, 0.77, 0.76, 0.74, 0.72, 0.69, 0.65, 0.60];
             let countryOpts = '<option value="1">Nessuno (100%)</option>';
             cm.forEach((val, k) => { countryOpts += `<option value="${val}">Livello ${k + 1} (${Math.round(val * 100)}%)</option>`; });
@@ -766,18 +774,11 @@
             targetsList.forEach((t, i) => {
                 let div = document.createElement('div');
                 div.className = "target-card";
-                let sourceLink = `l+k://coordinates?${t.source.x},${t.source.y}&${worldId}`;
                 let targetLinkStr = `l+k://coordinates?${t.coords.x},${t.coords.y}&${worldId}`;
-                let bonusHtml = "";
-                if (t.detectedHabitat === 'castello') {
-                    bonusHtml = `<div class="bonus-area active"><label class="chk-label"><input type="checkbox" id="chkMap_${i}" onchange="calculateRow(${i})"> Mappa Area (+5%)</label><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventCastello_${i}" onchange="calculateRow(${i})"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
-                } else if (t.detectedHabitat === 'fortezza') {
-                    bonusHtml = `<div class="bonus-area active"><label class="chk-label"><input type="checkbox" id="chkBussola_${i}" onchange="calculateRow(${i})"> Bussola (+5%)</label><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventFortezza_${i}" onchange="calculateRow(${i})"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
-                } else if (t.detectedHabitat === 'citta') {
-                    bonusHtml = `<div class="bonus-area active"><div style="margin-bottom:8px"><label style="margin-top:0">Livello Caserma</label><select id="selCityLvl_${i}" onchange="calculateRow(${i})">${lvlOpts}</select></div><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventCitta_${i}" onchange="calculateRow(${i})"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
-                } else if (t.detectedHabitat === 'metro') {
-                    bonusHtml = `<div class="bonus-area active"><div style="margin-bottom:8px"><label style="margin-top:0">Livello Accademia</label><select id="selMetroLvl_${i}" onchange="calculateRow(${i})">${lvlOpts}</select></div><label class="chk-label"><input type="checkbox" id="chkManovra_${i}" onchange="calculateRow(${i})"> Manovra Fianco (+10%)</label><div style="margin-top:5px"><label style="margin-top:0">Eventi Speciali</label><select id="selEventMetro_${i}" onchange="calculateRow(${i})"><option value="0">Nessuno</option><option value="100">⚡ Speed 100%</option></select></div></div>`;
-                }
+                
+                let initSource = t.allSources[0];
+                let sourceLink = `l+k://coordinates?${initSource.source.x},${initSource.source.y}&${worldId}`;
+                let bonusHtml = getBonusHtml(initSource.habType, i);
 
                 div.innerHTML = `
                     <div class="accordion-header" onclick="toggleAccordion(this)">
@@ -785,9 +786,20 @@
                         <div style="text-align:right; font-size:20px; color:var(--muted)">▼</div>
                     </div>
                     <div class="accordion-content">
-                        <div class="source-info-box"><div class="hab-icon">${t.habIcon}</div><div style="flex:1"><div class="source-label">Parti da: ${t.habLabel}</div><div class="source-name">${t.sourceName}</div><div class="source-coords">${t.source.x},${t.source.y}</div><a href="${sourceLink}" style="font-size:11px; color:var(--accent); text-decoration:none;">${sourceLink}</a></div></div>
+                        <div class="source-info-box">
+                            <div class="hab-icon" id="srcIcon_${i}">${initSource.habIcon}</div>
+                            <div style="flex:1">
+                                <div class="source-label" id="srcLabel_${i}">Parti da: ${initSource.habLabel}</div>
+                                <div class="source-name" id="srcName_${i}">${initSource.sourceName}</div>
+                                <div class="source-coords" id="srcCoords_${i}">${initSource.source.x},${initSource.source.y}</div>
+                                <a href="${sourceLink}" id="srcLink_${i}" style="font-size:11px; color:var(--accent); text-decoration:none;">${sourceLink}</a>
+                            </div>
+                        </div>
                         <label>Configura Truppa</label><select id="selTroop_${i}" onchange="calculateRow(${i})" style="margin-bottom:10px;">${troopOpts}</select>
-                        <div class="config-section"><div style="margin-bottom:8px;"><label style="margin-top:0">Bonus Paese (Sentieri)</label><select id="selCountryBonus_${i}" onchange="calculateRow(${i})">${countryOpts}</select></div>${bonusHtml}</div>
+                        <div class="config-section">
+                            <div style="margin-bottom:8px;"><label style="margin-top:0">Bonus Paese (Sentieri)</label><select id="selCountryBonus_${i}" onchange="calculateRow(${i})">${countryOpts}</select></div>
+                            <div id="bonusAreaContainer_${i}">${bonusHtml}</div>
+                        </div>
                         <div id="resBox_${i}" class="result-box"></div>
                     </div>
                 `;
@@ -803,20 +815,119 @@
         }
 
         function calculateRow(idx) {
-            let troopKey = document.getElementById(`selTroop_${idx}`).value;
+            let troopSelect = document.getElementById(`selTroop_${idx}`);
+            let troopKey = troopSelect.value;
             let resBox = document.getElementById(`resBox_${idx}`);
-            if (!troopKey) { resBox.classList.remove('visible'); return; }
+            
+            // Se non c'è truppa, nascondiamo il box SOLO se non c'è un avviso di warning attivo
+            if (!troopKey) { 
+                if (!resBox.classList.contains('warning-mode')) {
+                    resBox.classList.remove('visible'); 
+                }
+                return; 
+            }
+
+            // A questo punto abbiamo una truppa: puliamo lo stato di warning
+            resBox.classList.remove('warning-mode');
+
             let targetData = targetsList[idx];
-            let speed = getSpeedForCard(idx, troopKey);
-            let travelSec = targetData.dist * speed;
-            let travelSecSafe = travelSec * 1.05;
             let dVal = document.getElementById('inDate').value;
             let tVal = document.getElementById('inTime').value;
             let impactTime = new Date(dVal + "T" + tVal).getTime();
+            let now = Date.now();
+
+            let currentHabType = targetData.allSources[targetData.currentSourceIndex].habType;
+            let winnerIdx = -1;
+            let requiresNewInput = false;
+
+            // Cicliamo dal castello attualmente mostrato verso quelli più vicini
+            for (let k = targetData.currentSourceIndex; k < targetData.allSources.length; k++) {
+                let candidate = targetData.allSources[k];
+                
+                // 🛑 STOP: Se cambia l'habitat, dobbiamo far inserire all'utente i bonus prima di calcolare
+                if (candidate.habType !== currentHabType) {
+                    winnerIdx = k;
+                    requiresNewInput = true;
+                    break;
+                }
+
+                // Stesso habitat a video: possiamo calcolare subito usando i bonus della UI
+                let speed = getSpeedForCandidate(idx, candidate.habType, troopKey);
+                let travelSecSafe = candidate.dist * speed * 1.05;
+                let depTimeSafe = impactTime - (travelSecSafe * 1000);
+                
+                if (depTimeSafe >= now) {
+                    winnerIdx = k;
+                    break;
+                }
+            }
+
+            // Se siamo arrivati all'ultimo e nessuno arriva in tempo
+            if (winnerIdx === -1) {
+                winnerIdx = targetData.allSources.length - 1;
+                requiresNewInput = (targetData.allSources[winnerIdx].habType !== currentHabType);
+            }
+
+            // Aggiornamento grafico se abbiamo saltato a un nuovo castello
+            if (winnerIdx !== targetData.currentSourceIndex) {
+                let oldSource = targetData.allSources[targetData.currentSourceIndex];
+                let newSource = targetData.allSources[winnerIdx];
+                targetData.currentSourceIndex = winnerIdx;
+                
+                document.getElementById(`srcIcon_${idx}`).innerText = newSource.habIcon;
+                document.getElementById(`srcLabel_${idx}`).innerText = `Parti da: ${newSource.habLabel}`;
+                document.getElementById(`srcName_${idx}`).innerText = newSource.sourceName;
+                document.getElementById(`srcCoords_${idx}`).innerText = `${newSource.source.x},${newSource.source.y}`;
+                
+                let sourceLink = `l+k://coordinates?${newSource.source.x},${newSource.source.y}&${worldId}`;
+                let lnkEl = document.getElementById(`srcLink_${idx}`);
+                lnkEl.href = sourceLink;
+                lnkEl.innerText = sourceLink;
+
+                // Iniettiamo i nuovi campi bonus SOLO se è effettivamente cambiato l'habitat
+                if (oldSource.habType !== newSource.habType) {
+                    document.getElementById(`bonusAreaContainer_${idx}`).innerHTML = getBonusHtml(newSource.habType, idx);
+                }
+            }
+
+            // GESTIONE INPUT NECESSARIO (Riquadro giallo)
+            if (requiresNewInput) {
+                resBox.style.borderColor = 'var(--gold)';
+                resBox.style.background = 'rgba(251, 191, 36, 0.1)';
+                resBox.innerHTML = `
+                    <div style="color:var(--gold); font-weight:bold; font-size:14px; margin-bottom:5px;">
+                        ⚠️ Habitat Cambiato a ${targetData.allSources[winnerIdx].habLabel}
+                    </div>
+                    <div style="font-size:13px; color:#ddd; line-height:1.4;">
+                        Imposta i nuovi bonus qui sopra, poi <b>seleziona di nuovo la truppa</b> per verificare i tempi esatti.
+                    </div>`;
+                resBox.classList.add('visible');
+                resBox.classList.add('warning-mode');
+                
+                // Svuoto la truppa così l'utente è costretto a risceglierla per sbloccare il calcolo
+                troopSelect.value = "";
+                return;
+            }
+
+            // GESTIONE CALCOLO COMPLETATO
+            let finalSource = targetData.allSources[targetData.currentSourceIndex];
+            let finalSpeed = getSpeedForCandidate(idx, finalSource.habType, troopKey);
+            let travelSec = finalSource.dist * finalSpeed;
+            let travelSecSafe = travelSec * 1.05;
+
             let depTimeExact = new Date(impactTime - (travelSec * 1000));
             let depTimeSafe = new Date(impactTime - (travelSecSafe * 1000));
+
+            if (depTimeSafe.getTime() < now) {
+                resBox.style.borderColor = 'var(--danger)';
+                resBox.style.background = 'rgba(239, 68, 68, 0.1)';
+            } else {
+                resBox.style.borderColor = 'var(--success)'; 
+                resBox.style.background = 'rgba(52, 211, 153, 0.1)';
+            }
+
             const fmt = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} del ${pad(d.getDate())}/${pad(d.getMonth() + 1)}`;
-            resBox.innerHTML = `<div class="launch-window-simple">Parti tra <br><b>${fmt(depTimeSafe)}</b><br> e <br><b>${fmt(depTimeExact)}</b></div><a href="l+k://coordinates?${targetData.coords.x},${targetData.coords.y}&${worldId}" class="launch-btn">VAI AL TARGET</a>`;
+            resBox.innerHTML = `<div class="launch-window-simple">Parti tra <br><b>${fmt(depTimeSafe)}</b><br> e <br><b>${fmt(depTimeExact)}</b></div><a href="l+k://coordinates?${finalSource.source.x},${finalSource.source.y}&${worldId}" class="launch-btn">VAI AL TARGET</a>`;
             resBox.classList.add('visible');
         }
     </script>
